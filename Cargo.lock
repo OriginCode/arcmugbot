@@ -30,6 +30,7 @@ dependencies = [
  "anyhow",
  "log",
  "pretty_env_logger",
+ "serde",
  "teloxide",
  "tokio",
 ]

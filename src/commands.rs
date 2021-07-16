@@ -1,6 +1,6 @@
 use teloxide::utils::command::{BotCommand, ParseError};
 
-type Results = Vec<(u32, u32, u32)>;
+pub type Results = Vec<(u32, u32, u32)>;
 
 // Commands
 #[derive(BotCommand)]
@@ -40,15 +40,15 @@ macro_rules! yield_into {
 
 /// Parse a submission command
 fn submission_parser(input: String) -> Result<(u32, Results), ParseError> {
-    // The command should be in this format:
+    // The command should be in this pattern:
     // /submit <level> <[<GREAT>|<GOOD>|<MISS>]..>
     // For example:
-    // /submit 1 10|3|1 13|2|0 3|0|0 0|0|0
+    // /submit 1 10,3,1 13,2,0 3,0,0 0,0,0
     let mut parts = input.split_whitespace();
     let level = next_str_into_u32(parts.next())?;
     let mut results = Vec::new();
     for i in parts {
-        let mut result = i.splitn(3, '|');
+        let mut result = i.splitn(3, ',');
         let great;
         let good;
         let miss;
