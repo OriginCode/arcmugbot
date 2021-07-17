@@ -135,7 +135,7 @@ async fn answer(
                     },
                 );
             }
-            serde_json::to_writer(
+            serde_json::to_writer_pretty(
                 fs::File::create(format!("./records-{}.json", get_date()))?,
                 &records,
             )?;
