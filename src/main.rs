@@ -59,13 +59,12 @@ impl fmt::Display for Status {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Record {
-    level: u32,
     life: u32,
     status: Status,
 }
 
 type Courses = Vec<Course>;
-type Records = HashMap<i64, Record>;
+type Records = HashMap<i64, HashMap<u32, Record>>;
 
 /// Use to calculate the life remains for a course
 fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
@@ -121,19 +120,21 @@ async fn answer(
 
             if let Some(r) = records.get_mut(&user) {
                 // update record
-                r.level = level;
-                r.life = remain;
-                r.status = status;
+                r.entry(level).or_insert(Record {
+                    life: remain,
+                    status,
+                });
             } else {
                 // new record
-                records.insert(
-                    user,
+                let mut record = HashMap::new();
+                record.insert(
+                    level,
                     Record {
-                        level,
                         life: remain,
                         status,
                     },
                 );
+                records.insert(user, record);
             }
             serde_json::to_writer_pretty(
                 fs::File::create(format!("./records-{}.json", get_date()))?,
@@ -151,7 +152,32 @@ async fn answer(
             .parse_mode(ParseMode::MarkdownV2)
             .await?
         }
-        Command::Score { level: _ } | Command::Query { level: _ } => cx.answer("WIP").await?,
+        Command::Score { level } => {
+            let records: Records =
+                serde_json::from_slice(&fs::read(format!("./records-{}.json", get_date()))?)?;
+            let courses: Courses =
+                serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date()))?)?;
+            // get user id
+            let user = cx
+                .update
+                .from()
+                .ok_or_else(|| ParseError::Custom("invalid user".into()))?
+                .id;
+            if let Some(user_record) = records.get(&user) {
+                if let Some(r) = user_record.get(&level) {
+                    cx.answer(format!(
+                        "Life: {}/{}\n{}",
+                        r.life,
+                        courses[level as usize - 1].life,
+                        r.status
+                    ))
+                    .await?;
+                    return Ok(());
+                }
+            }
+            cx.answer("Record does not exist!").await?
+        }
+        Command::Query { level: _ } => cx.answer("WIP").await?,
     };
 
     Ok(())
