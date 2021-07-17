@@ -18,7 +18,7 @@ mod commands;
 const TOKEN: &str = "";
 const TZ: &Tz = &Shanghai;
 
-// maimai difficulties
+/// maimai difficulties
 #[derive(Deserialize, Debug)]
 enum Difficulty {
     Easy,
@@ -78,7 +78,7 @@ struct Record {
 type Courses = Vec<Course>;
 type Records = HashMap<i64, HashMap<u32, Record>>;
 
-/// Use to calculate the life remains for a course
+/// Calculate the life remains for a course
 fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
     let mut life = life as i32;
     for result in results {
@@ -229,7 +229,7 @@ async fn run() -> Result<()> {
     log::info!("Starting arcmugbot...");
 
     let bot = Bot::new(TOKEN).auto_send();
-    let bot_name = "Arcade MUG Bot".to_owned();
+    let bot_name = "arcmugbot".to_owned();
 
     teloxide::commands_repl(bot, bot_name, answer).await;
 
