@@ -12,18 +12,24 @@ pub enum Command {
     #[command(description = "display help")]
     Help,
     #[command(
-        description = "submit maimai course of current month",
+        description = "submit maimai course of current month (/submit LEVEL [[GREAT|GOOD|MISS]..])",
         parse_with = "submission_parser"
     )]
-    Submit {
-        level: u32,
-        results: Results,
-    },
+    Submit { level: u32, results: Results },
+    #[command(
+        description = "check your course score (/score LEVEL)",
+        parse_with = "split"
+    )]
+    Score { level: u32 },
+    #[command(
+        description = "get course details (/query LEVEL)",
+        parse_with = "split"
+    )]
+    Query { level: u32 },
 }
 
 fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {
-    from
-        .ok_or_else(|| ParseError::Custom("invalid submission".into()))?
+    from.ok_or_else(|| ParseError::Custom("invalid submission".into()))?
         .parse::<u32>()
         .map_err(|e| ParseError::IncorrectFormat(e.into()))
 }
@@ -41,7 +47,7 @@ macro_rules! yield_into {
 /// Parse a submission command
 fn submission_parser(input: String) -> Result<(u32, Results), ParseError> {
     // The command should be in this pattern:
-    // /submit <level> <[<GREAT>|<GOOD>|<MISS>]..>
+    // /submit LEVEL [[GREAT|GOOD|MISS]..]
     // For example:
     // /submit 1 10,3,1 13,2,0 3,0,0 0,0,0
     let mut parts = input.split_whitespace();
