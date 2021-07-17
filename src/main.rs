@@ -28,6 +28,18 @@ enum Difficulty {
     ReMaster,
 }
 
+impl fmt::Display for Difficulty {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Difficulty::Easy => write!(f, "Easy"),
+            Difficulty::Advanced => write!(f, "Advanced"),
+            Difficulty::Expert => write!(f, "Expert"),
+            Difficulty::Master => write!(f, "Master"),
+            Difficulty::ReMaster => write!(f, "Re:Master"),
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 struct Song {
     title: String,
@@ -186,7 +198,27 @@ async fn answer(
             }
             cx.answer("Record does not exist!").await?
         }
-        Command::Query { level: _ } => cx.answer("WIP").await?,
+        Command::Query { level } => {
+            // print course information
+            // For example:
+            // Life: 500
+            //
+            // Song1 Master 14
+            // Song2 Re:Master 14
+            // Song3 Re:Master 14+
+            // Song4 Re:Master 15
+            let courses: Courses =
+                serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date()))?)?;
+            let course = &courses[level as usize - 1];
+            let mut output = format!("Life: {}\n", course.life);
+            for song in course.songs.iter() {
+                output = format!(
+                    "{}\n{} {} {}",
+                    output, song.title, song.difficulty, song.level
+                );
+            }
+            cx.answer(output).await?
+        }
     };
 
     Ok(())
