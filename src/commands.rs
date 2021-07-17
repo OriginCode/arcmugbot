@@ -9,6 +9,8 @@ pub type Results = Vec<(u32, u32, u32)>;
     description = "The following commands are available:"
 )]
 pub enum Command {
+    #[command(description = "pong!")]
+    Ping,
     #[command(description = "display help")]
     Help,
     #[command(

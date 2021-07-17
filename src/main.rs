@@ -98,6 +98,7 @@ async fn answer(
     command: Command,
 ) -> std::result::Result<(), Box<dyn Error + Send + Sync>> {
     match command {
+        Command::Ping => cx.answer("pong!").await?,
         Command::Help => cx.answer(Command::descriptions()).await?,
         Command::Submit { level, results } => {
             let mut records: Records =
@@ -118,24 +119,32 @@ async fn answer(
             let life = courses[level as usize - 1].life;
             let (remain, status) = parse_score(life, results)?;
 
-            if let Some(r) = records.get_mut(&user) {
-                // update record
-                r.entry(level).or_insert(Record {
-                    life: remain,
-                    status,
+            records
+                .entry(user)
+                .and_modify(|r| {
+                    // update record
+                    r.entry(level)
+                        .and_modify(|record| {
+                            record.life = remain;
+                            record.status = status;
+                        })
+                        .or_insert(Record {
+                            life: remain,
+                            status,
+                        });
+                })
+                .or_insert_with(|| {
+                    // new record
+                    let mut record = HashMap::new();
+                    record.insert(
+                        level,
+                        Record {
+                            life: remain,
+                            status,
+                        },
+                    );
+                    record
                 });
-            } else {
-                // new record
-                let mut record = HashMap::new();
-                record.insert(
-                    level,
-                    Record {
-                        life: remain,
-                        status,
-                    },
-                );
-                records.insert(user, record);
-            }
             serde_json::to_writer_pretty(
                 fs::File::create(format!("./records-{}.json", get_date()))?,
                 &records,
