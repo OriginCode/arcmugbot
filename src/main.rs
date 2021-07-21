@@ -7,7 +7,10 @@ use std::{collections::HashMap, error::Error, fmt, fs};
 use teloxide::{
     prelude::*,
     types::ParseMode,
-    utils::command::{BotCommand, ParseError},
+    utils::{
+        command::{BotCommand, ParseError},
+        markdown::*,
+    },
 };
 
 mod commands;
@@ -163,8 +166,12 @@ async fn answer(
             )?;
 
             cx.reply_to(format!(
-                "Submitted!\n{}\nLife: {}/{}\n{}\n",
-                course.name, remain, life, status,
+                "{}\n{}\nLife: {}/{}\n{}\n",
+                escape("Submitted!"),
+                bold(&course.name),
+                remain,
+                life,
+                status,
             ))
             .parse_mode(ParseMode::MarkdownV2)
             .await?
@@ -195,8 +202,9 @@ async fn answer(
                     let course = &courses[level as usize - 1];
                     cx.reply_to(format!(
                         "{}\nLife: {}/{}\n{}",
-                        course.name, r.life, course.life, r.status
+                        bold(&course.name), r.life, course.life, r.status
                     ))
+                    .parse_mode(ParseMode::MarkdownV2)
                     .await?;
                     return Ok(());
                 }
@@ -219,14 +227,14 @@ async fn answer(
                 return Ok(());
             }
             let course = &courses[level as usize - 1];
-            let mut output = format!("{}\nLife: {}\n", course.name, course.life);
+            let mut output = format!("{}\nLife: {}\n", bold(&course.name), course.life);
             for song in course.songs.iter() {
                 output = format!(
                     "{}\n{} {} {}",
-                    output, song.title, song.difficulty, song.level
+                    output, escape(&song.title), song.difficulty, song.level
                 );
             }
-            cx.reply_to(output).await?
+            cx.reply_to(output).parse_mode(ParseMode::MarkdownV2).await?
         }
     };
 
