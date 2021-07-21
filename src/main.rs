@@ -13,7 +13,6 @@ use teloxide::{
 mod commands;
 
 const TOKEN: &str = "";
-const COURSE_SUBMISSION: &str = "课题提交";
 const TZ: &Tz = &Shanghai;
 
 /// maimai difficulties
@@ -83,18 +82,14 @@ async fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
     for result in results {
         life -= result.0 as i32 * 2 + result.1 as i32 * 3 + result.2 as i32 * 5;
     }
-    if life < 0 {
+    let status = if life < 0 {
         life = 0;
-    }
+        Status::Failed
+    } else {
+        Status::Passed
+    };
 
-    Ok((
-        life as u32,
-        if life > 0 {
-            Status::Passed
-        } else {
-            Status::Failed
-        },
-    ))
+    Ok((life as u32, status))
 }
 
 /// Get the date of the current month
@@ -111,6 +106,11 @@ async fn answer(
     match command {
         Command::Ping => cx.answer("pong!").await?,
         Command::Help => cx.answer(Command::descriptions()).await?,
+        Command::Calc { life, results } => {
+            let (remain, status) = parse_score(life, results).await?;
+            cx.answer(format!("Life: {}/{}\n{}", remain, life, status))
+                .await?
+        }
         Command::Submit { level, results } => {
             let date = get_date().await;
             let mut records: Records =
@@ -127,8 +127,8 @@ async fn answer(
                 .from()
                 .ok_or_else(|| ParseError::Custom("invalid user".into()))?
                 .id;
-
-            let life = courses[level as usize - 1].life;
+            let course = &courses[level as usize - 1];
+            let life = course.life;
             let (remain, status) = parse_score(life, results).await?;
 
             records
@@ -163,12 +163,8 @@ async fn answer(
             )?;
 
             cx.answer(format!(
-                "Life: {}/{}\n{}\n\n#{} #{}",
-                remain,
-                life,
-                status,
-                courses[level as usize - 1].name,
-                COURSE_SUBMISSION
+                "{}\nLife: {}/{}\n{}\n",
+                course.name, remain, life, status,
             ))
             .parse_mode(ParseMode::MarkdownV2)
             .await?

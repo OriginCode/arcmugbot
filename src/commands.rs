@@ -14,8 +14,13 @@ pub enum Command {
     #[command(description = "display help")]
     Help,
     #[command(
+        description = "calculate the life remains (/calc LIFE [[GREAT|GOOD|MISS]..])",
+        parse_with = "score_parser"
+    )]
+    Calc { life: u32, results: Results },
+    #[command(
         description = "submit maimai course of current month (/submit LEVEL [[GREAT|GOOD|MISS]..])",
-        parse_with = "submission_parser"
+        parse_with = "score_parser"
     )]
     Submit { level: u32, results: Results },
     #[command(
@@ -37,32 +42,33 @@ fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {
 }
 
 macro_rules! yield_into {
-    (($x:ident) = $v:expr) => {
+    ($v:expr => ($x:ident)) => {
         $x = next_str_into_u32($v.next())?;
     };
-    (($x:ident, $($y:ident),+) = $v:expr) => {
+    ($v:expr => ($x:ident, $($y:ident),+)) => {
         $x = next_str_into_u32($v.next())?;
-        yield_into!(($($y),+) = $v);
+        yield_into!($v => ($($y),+));
     }
 }
 
-/// Parse a submission command
-fn submission_parser(input: String) -> Result<(u32, Results), ParseError> {
-    // The command should be in this pattern:
-    // /submit LEVEL [[GREAT|GOOD|MISS]..]
+/// Parse a score calc command
+fn score_parser(input: String) -> Result<(u32, Results), ParseError> {
+    // The command should satisfy this pattern:
+    // /command MARKER [[GREAT|GOOD|MISS]..]
+    //
     // For example:
-    // /submit 1 10,3,1 13,2,0 3,0,0 0,0,0
+    // /calc 500 10,3,1 13,2,0 3,0,0 0,0,0
     let mut parts = input.split_whitespace();
-    let level = next_str_into_u32(parts.next())?;
+    let marker = next_str_into_u32(parts.next())?;
     let mut results = Vec::new();
     for i in parts {
         let mut result = i.splitn(3, ',');
         let great;
         let good;
         let miss;
-        yield_into!((great, good, miss) = result);
+        yield_into!(result => (great, good, miss));
         results.push((great, good, miss))
     }
 
-    Ok((level, results))
+    Ok((marker, results))
 }
