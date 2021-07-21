@@ -105,10 +105,10 @@ async fn answer(
 ) -> std::result::Result<(), Box<dyn Error + Send + Sync>> {
     match command {
         Command::Ping => cx.answer("pong!").await?,
-        Command::Help => cx.answer(Command::descriptions()).await?,
+        Command::Help => cx.reply_to(Command::descriptions()).await?,
         Command::Calc { life, results } => {
             let (remain, status) = parse_score(life, results).await?;
-            cx.answer(format!("Life: {}/{}\n{}", remain, life, status))
+            cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))
                 .await?
         }
         Command::Submit { level, results } => {
@@ -118,7 +118,7 @@ async fn answer(
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
             if level as usize > courses.len() || level <= 0 {
-                cx.answer("Invalid course level!").await?;
+                cx.reply_to("Invalid course level!").await?;
                 return Ok(());
             }
             // get user id
@@ -162,8 +162,8 @@ async fn answer(
                 &records,
             )?;
 
-            cx.answer(format!(
-                "{}\nLife: {}/{}\n{}\n",
+            cx.reply_to(format!(
+                "Submitted!\n{}\nLife: {}/{}\n{}\n",
                 course.name, remain, life, status,
             ))
             .parse_mode(ParseMode::MarkdownV2)
@@ -181,7 +181,7 @@ async fn answer(
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
             if level as usize > courses.len() || level <= 0 {
-                cx.answer("Invalid course level!").await?;
+                cx.reply_to("Invalid course level!").await?;
                 return Ok(());
             }
             // get user id
@@ -193,7 +193,7 @@ async fn answer(
             if let Some(user_record) = records.get(&user) {
                 if let Some(r) = user_record.get(&level) {
                     let course = &courses[level as usize - 1];
-                    cx.answer(format!(
+                    cx.reply_to(format!(
                         "{}\nLife: {}/{}\n{}",
                         course.name, r.life, course.life, r.status
                     ))
@@ -201,7 +201,7 @@ async fn answer(
                     return Ok(());
                 }
             }
-            cx.answer("Record does not exist!").await?
+            cx.reply_to("Record does not exist!").await?
         }
         Command::Query { level } => {
             // print course information
@@ -215,7 +215,7 @@ async fn answer(
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date().await))?)?;
             if level as usize > courses.len() || level <= 0 {
-                cx.answer("Invalid course level!").await?;
+                cx.reply_to("Invalid course level!").await?;
                 return Ok(());
             }
             let course = &courses[level as usize - 1];
@@ -226,7 +226,7 @@ async fn answer(
                     output, song.title, song.difficulty, song.level
                 );
             }
-            cx.answer(output).await?
+            cx.reply_to(output).await?
         }
     };
 
