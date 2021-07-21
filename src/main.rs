@@ -117,7 +117,7 @@ async fn answer(
                 serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
-            if level as usize > courses.len() {
+            if level as usize > courses.len() || level <= 0 {
                 cx.answer("Invalid course level!").await?;
                 return Ok(());
             }
@@ -180,6 +180,10 @@ async fn answer(
                 serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
+            if level as usize > courses.len() || level <= 0 {
+                cx.answer("Invalid course level!").await?;
+                return Ok(());
+            }
             // get user id
             let user = cx
                 .update
@@ -210,6 +214,10 @@ async fn answer(
             // Song4 Re:Master 15
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date().await))?)?;
+            if level as usize > courses.len() || level <= 0 {
+                cx.answer("Invalid course level!").await?;
+                return Ok(());
+            }
             let course = &courses[level as usize - 1];
             let mut output = format!("{}\nLife: {}\n", course.name, course.life);
             for song in course.songs.iter() {
