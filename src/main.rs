@@ -79,7 +79,7 @@ type Courses = Vec<Course>;
 type Records = HashMap<i64, HashMap<u32, Record>>;
 
 /// Calculate the life remains for a course
-fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
+async fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
     let mut life = life as i32;
     for result in results {
         life -= result.0 as i32 * 2 + result.1 as i32 * 3 + result.2 as i32 * 5;
@@ -99,7 +99,7 @@ fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
 }
 
 /// Get the date of the current month
-fn get_date() -> String {
+async fn get_date() -> String {
     let datetime = Utc::today().with_timezone(TZ);
     format!("{}-{}", datetime.year(), datetime.month())
 }
@@ -113,10 +113,11 @@ async fn answer(
         Command::Ping => cx.answer("pong!").await?,
         Command::Help => cx.answer(Command::descriptions()).await?,
         Command::Submit { level, results } => {
+            let date = get_date().await;
             let mut records: Records =
-                serde_json::from_slice(&fs::read(format!("./records-{}.json", get_date()))?)?;
+                serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
             let courses: Courses =
-                serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date()))?)?;
+                serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
             if level as usize > courses.len() {
                 cx.answer("Invalid course level!").await?;
                 return Ok(());
@@ -129,7 +130,7 @@ async fn answer(
                 .id;
 
             let life = courses[level as usize - 1].life;
-            let (remain, status) = parse_score(life, results)?;
+            let (remain, status) = parse_score(life, results).await?;
 
             records
                 .entry(user)
@@ -158,7 +159,7 @@ async fn answer(
                     record
                 });
             serde_json::to_writer_pretty(
-                fs::File::create(format!("./records-{}.json", get_date()))?,
+                fs::File::create(format!("./records-{}.json", date))?,
                 &records,
             )?;
 
@@ -174,10 +175,16 @@ async fn answer(
             .await?
         }
         Command::Score { level } => {
+            // print user record
+            // For example:
+            //
+            // Life: 245/900
+            // Passed
+            let date = get_date().await;
             let records: Records =
-                serde_json::from_slice(&fs::read(format!("./records-{}.json", get_date()))?)?;
+                serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
             let courses: Courses =
-                serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date()))?)?;
+                serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
             // get user id
             let user = cx
                 .update
@@ -208,7 +215,7 @@ async fn answer(
             // Song3 Re:Master 14+
             // Song4 Re:Master 15
             let courses: Courses =
-                serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date()))?)?;
+                serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date().await))?)?;
             let course = &courses[level as usize - 1];
             let mut output = format!("Life: {}\n", course.life);
             for song in course.songs.iter() {
