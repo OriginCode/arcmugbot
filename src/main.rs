@@ -7,15 +7,13 @@ use std::{collections::HashMap, error::Error, fmt, fs};
 use teloxide::{
     prelude::*,
     types::ParseMode,
-    utils::{
-        command::{BotCommand, ParseError},
-        markdown::*,
-    },
+    utils::command::{BotCommand, ParseError},
 };
 
 mod commands;
 
 const TOKEN: &str = "";
+const COURSE_SUBMISSION: &str = "课题提交";
 const TZ: &Tz = &Shanghai;
 
 /// maimai difficulties
@@ -49,6 +47,7 @@ struct Song {
 
 #[derive(Deserialize, Debug)]
 struct Course {
+    name: String,
     life: u32,
     songs: Vec<Song>,
 }
@@ -164,12 +163,12 @@ async fn answer(
             )?;
 
             cx.answer(format!(
-                "{}\nCourse Level: {}\nLife: {}/{}\n{}",
-                code_inline("[DBG] [WIP]"),
-                level,
+                "Life: {}/{}\n{}\n\n#{} #{}",
                 remain,
                 life,
                 status,
+                courses[level as usize - 1].name,
+                COURSE_SUBMISSION
             ))
             .parse_mode(ParseMode::MarkdownV2)
             .await?
@@ -193,11 +192,10 @@ async fn answer(
                 .id;
             if let Some(user_record) = records.get(&user) {
                 if let Some(r) = user_record.get(&level) {
+                    let course = &courses[level as usize - 1];
                     cx.answer(format!(
-                        "Life: {}/{}\n{}",
-                        r.life,
-                        courses[level as usize - 1].life,
-                        r.status
+                        "{}\nLife: {}/{}\n{}",
+                        course.name, r.life, course.life, r.status
                     ))
                     .await?;
                     return Ok(());
@@ -217,7 +215,7 @@ async fn answer(
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date().await))?)?;
             let course = &courses[level as usize - 1];
-            let mut output = format!("Life: {}\n", course.life);
+            let mut output = format!("{}\nLife: {}\n", course.name, course.life);
             for song in course.songs.iter() {
                 output = format!(
                     "{}\n{} {} {}",
