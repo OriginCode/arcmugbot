@@ -117,7 +117,7 @@ async fn answer(
                 serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
-            if level as usize > courses.len() || level <= 0 {
+            if level as usize > courses.len() || level == 0 {
                 cx.reply_to("Invalid course level!").await?;
                 return Ok(());
             }
@@ -180,7 +180,7 @@ async fn answer(
                 serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
-            if level as usize > courses.len() || level <= 0 {
+            if level as usize > courses.len() || level == 0 {
                 cx.reply_to("Invalid course level!").await?;
                 return Ok(());
             }
@@ -214,7 +214,7 @@ async fn answer(
             // Song4 Re:Master 15
             let courses: Courses =
                 serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date().await))?)?;
-            if level as usize > courses.len() || level <= 0 {
+            if level as usize > courses.len() || level == 0 {
                 cx.reply_to("Invalid course level!").await?;
                 return Ok(());
             }
