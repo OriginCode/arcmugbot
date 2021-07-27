@@ -76,8 +76,14 @@ struct Record {
     status: Status,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct UserRecords {
+    fullname: String,
+    records: HashMap<u32, Record>,
+}
+
 type Courses = Vec<Course>;
-type Records = HashMap<i64, HashMap<u32, Record>>;
+type Records = HashMap<i64, UserRecords>;
 
 /// Calculate the life remains for a course
 async fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
@@ -128,17 +134,18 @@ async fn answer(
             let user = cx
                 .update
                 .from()
-                .ok_or_else(|| ParseError::Custom("invalid user".into()))?
-                .id;
+                .ok_or_else(|| ParseError::Custom("invalid user".into()))?;
             let course = &courses[level as usize - 1];
             let life = course.life;
             let (remain, status) = parse_score(life, results).await?;
 
             records
-                .entry(user)
+                .entry(user.id)
                 .and_modify(|r| {
                     // update record
-                    r.entry(level)
+                    r.fullname = user.full_name();
+                    r.records
+                        .entry(level)
                         .and_modify(|record| {
                             record.life = remain;
                             record.status = status;
@@ -150,15 +157,18 @@ async fn answer(
                 })
                 .or_insert_with(|| {
                     // new record
-                    let mut record = HashMap::new();
-                    record.insert(
+                    let mut records = HashMap::new();
+                    records.insert(
                         level,
                         Record {
                             life: remain,
                             status,
                         },
                     );
-                    record
+                    UserRecords {
+                        fullname: user.full_name(),
+                        records,
+                    }
                 });
             serde_json::to_writer_pretty(
                 fs::File::create(format!("./records-{}.json", date))?,
@@ -198,11 +208,14 @@ async fn answer(
                 .ok_or_else(|| ParseError::Custom("invalid user".into()))?
                 .id;
             if let Some(user_record) = records.get(&user) {
-                if let Some(r) = user_record.get(&level) {
+                if let Some(r) = user_record.records.get(&level) {
                     let course = &courses[level as usize - 1];
                     cx.reply_to(format!(
                         "{}\nLife: {}/{}\n{}",
-                        bold(&course.name), r.life, course.life, r.status
+                        bold(&course.name),
+                        r.life,
+                        course.life,
+                        r.status
                     ))
                     .parse_mode(ParseMode::MarkdownV2)
                     .await?;
@@ -231,10 +244,15 @@ async fn answer(
             for song in course.songs.iter() {
                 output = format!(
                     "{}\n{} {} {}",
-                    output, escape(&song.title), song.difficulty, song.level
+                    output,
+                    escape(&song.title),
+                    song.difficulty,
+                    song.level
                 );
             }
-            cx.reply_to(output).parse_mode(ParseMode::MarkdownV2).await?
+            cx.reply_to(output)
+                .parse_mode(ParseMode::MarkdownV2)
+                .await?
         }
     };
 
