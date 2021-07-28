@@ -33,6 +33,13 @@ pub enum Command {
         parse_with = "split"
     )]
     Query { level: u32 },
+    #[command(description = "get players' passed courses")]
+    Passed,
+    #[command(
+        description = "get rank for the course level (/rank LEVEL)",
+        parse_with = "split"
+    )]
+    Rank { level: u32 },
 }
 
 fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {

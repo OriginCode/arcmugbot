@@ -2,6 +2,7 @@ use anyhow::Result;
 use chrono::{Datelike, Utc};
 use chrono_tz::{Asia::Shanghai, Tz};
 use commands::{Command, Results};
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, error::Error, fmt, fs};
 use teloxide::{
@@ -55,7 +56,7 @@ struct Course {
 }
 
 /// An enum showing if the course is passed
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 enum Status {
     Passed,
     Failed,
@@ -176,7 +177,7 @@ async fn answer(
             )?;
 
             cx.reply_to(format!(
-                "{}\n{}\nLife: {}/{}\n{}\n",
+                "{}\n{} Life: {}/{} {}",
                 escape("Submitted!"),
                 bold(&course.name),
                 remain,
@@ -211,7 +212,7 @@ async fn answer(
                 if let Some(r) = user_record.records.get(&level) {
                     let course = &courses[level as usize - 1];
                     cx.reply_to(format!(
-                        "{}\nLife: {}/{}\n{}",
+                        "{} Life: {}/{} {}",
                         bold(&course.name),
                         r.life,
                         course.life,
@@ -240,15 +241,81 @@ async fn answer(
                 return Ok(());
             }
             let course = &courses[level as usize - 1];
-            let mut output = format!("{}\nLife: {}\n", bold(&course.name), course.life);
+            let mut output = format!("{} Life: {}\n", bold(&course.name), course.life);
             for song in course.songs.iter() {
                 output = format!(
                     "{}\n{} {} {}",
                     output,
                     escape(&song.title),
                     song.difficulty,
-                    song.level
+                    escape(&song.level)
                 );
+            }
+            cx.reply_to(output)
+                .parse_mode(ParseMode::MarkdownV2)
+                .await?
+        }
+        Command::Passed => {
+            let date = get_date().await;
+            let records: Records =
+                serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
+            let courses: Courses =
+                serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
+            let mut output = String::new();
+            for r in records {
+                // show all the passed records of players
+                let mut passed_courses = String::new();
+                for c in r.1.records {
+                    if c.1.status == Status::Passed {
+                        passed_courses = format!(
+                            "{} {}",
+                            passed_courses,
+                            bold(&courses[c.0 as usize - 1].name)
+                        );
+                    }
+                }
+                output = format!("{}\n{}: {}", output, escape(&r.1.fullname), passed_courses);
+            }
+            cx.reply_to(output)
+                .parse_mode(ParseMode::MarkdownV2)
+                .await?
+        }
+        Command::Rank { level } => {
+            let date = get_date().await;
+            let records: Records =
+                serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
+            let courses: Courses =
+                serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
+            if level as usize > courses.len() || level == 0 {
+                cx.reply_to("Invalid course level!").await?;
+                return Ok(());
+            }
+            let mut output = bold(&courses[level as usize - 1].name);
+            let mut player_records = IndexMap::new();
+            for r in records {
+                if let Some(c) = r.1.records.get(&level) {
+                    if c.status == Status::Passed {
+                        player_records.insert(r.1.fullname, c.life);
+                    }
+                }
+            }
+            if player_records.is_empty() {
+                output = format!("{}\n{}", output, escape("No record yet."));
+                cx.reply_to(output)
+                    .parse_mode(ParseMode::MarkdownV2)
+                    .await?;
+                return Ok(());
+            }
+            player_records.sort_by(|_, a, _, b| Ord::cmp(b, a)); // top rank
+            for r in player_records.iter().enumerate() {
+                output = format!(
+                    "{}\n{}{} {}: {}",
+                    output,
+                    r.0 + 1,
+                    escape("."),
+                    escape(r.1 .0), // player fullname
+                    r.1 .1          // life remains
+                )
             }
             cx.reply_to(output)
                 .parse_mode(ParseMode::MarkdownV2)
