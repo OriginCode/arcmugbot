@@ -16,6 +16,8 @@ use teloxide::{
 
 mod commands;
 
+const ABOUT: &str =
+    "Arcade MUG Bot, designed by OriginCode.\nGitHub: https://github.com/OriginCode/arcmugbot";
 const TOKEN: &str = "";
 const TZ: &Tz = &Shanghai;
 
@@ -116,6 +118,7 @@ async fn answer(
     match command {
         Command::Ping => cx.answer("pong!").await?,
         Command::Help => cx.reply_to(Command::descriptions()).await?,
+        Command::About => cx.reply_to(ABOUT).await?,
         Command::Calc { life, results } => {
             let (remain, status) = parse_score(life, results).await?;
             cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))

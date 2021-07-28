@@ -13,6 +13,8 @@ pub enum Command {
     Ping,
     #[command(description = "display help")]
     Help,
+    #[command(description = "display about")]
+    About,
     #[command(
         description = "calculate the life remains (/calc LIFE [[GREAT|GOOD|MISS]..])",
         parse_with = "score_parser"
