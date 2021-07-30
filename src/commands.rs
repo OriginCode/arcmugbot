@@ -16,12 +16,12 @@ pub enum Command {
     #[command(description = "display about")]
     About,
     #[command(
-        description = "calculate the life remains (/calc LIFE [[GREAT|GOOD|MISS]..])",
+        description = "calculate the life remains (/calc LIFE [[GREAT,GOOD,MISS]..])",
         parse_with = "score_parser"
     )]
     Calc { life: u32, results: Results },
     #[command(
-        description = "submit maimai course of current month (/submit LEVEL [[GREAT|GOOD|MISS]..])",
+        description = "submit maimai course of current month (/submit LEVEL [[GREAT,GOOD,MISS]..])",
         parse_with = "score_parser"
     )]
     Submit { level: u32, results: Results },
@@ -63,7 +63,7 @@ macro_rules! yield_into {
 /// Parse a score calc command
 fn score_parser(input: String) -> Result<(u32, Results), ParseError> {
     // The command should satisfy this pattern:
-    // /command MARKER [[GREAT|GOOD|MISS]..]
+    // /command MARKER [[GREAT,GOOD,MISS]..]
     //
     // For example:
     // /calc 500 10,3,1 13,2,0 3,0,0 0,0,0

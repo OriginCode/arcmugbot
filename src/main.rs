@@ -4,7 +4,7 @@ use chrono_tz::{Asia::Shanghai, Tz};
 use commands::{Command, Results};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, error::Error, fmt, fs};
+use std::{collections::HashMap, error::Error, fmt};
 use teloxide::{
     prelude::*,
     types::ParseMode,
@@ -13,6 +13,7 @@ use teloxide::{
         markdown::*,
     },
 };
+use tokio::fs;
 
 mod commands;
 
@@ -107,7 +108,7 @@ async fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
 /// Get the date of the current month
 async fn get_date() -> String {
     let datetime = Utc::today().with_timezone(TZ);
-    format!("{}-{}", datetime.year(), datetime.month())
+    format!("{}-{}", datetime.year(), datetime.month() + 1)
 }
 
 /// Parse Telegram commands
@@ -115,6 +116,11 @@ async fn answer(
     cx: UpdateWithCx<AutoSend<Bot>, Message>,
     command: Command,
 ) -> std::result::Result<(), Box<dyn Error + Send + Sync>> {
+    // load files
+    let date = get_date().await;
+    let mut records: Records =
+        serde_json::from_slice(&fs::read(format!("./records-{}.json", date)).await?)?;
+    let courses: Courses = serde_json::from_slice(&fs::read(format!("./courses-{}.json", date)).await?)?;
     match command {
         Command::Ping => cx.answer("pong!").await?,
         Command::Help => cx.reply_to(Command::descriptions()).await?,
@@ -125,11 +131,6 @@ async fn answer(
                 .await?
         }
         Command::Submit { level, results } => {
-            let date = get_date().await;
-            let mut records: Records =
-                serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
-            let courses: Courses =
-                serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
             if level as usize > courses.len() || level == 0 {
                 cx.reply_to("Invalid course level!").await?;
                 return Ok(());
@@ -175,7 +176,7 @@ async fn answer(
                     }
                 });
             serde_json::to_writer_pretty(
-                fs::File::create(format!("./records-{}.json", date))?,
+                std::fs::File::create(format!("./records-{}.json", date))?,
                 &records,
             )?;
 
@@ -196,11 +197,6 @@ async fn answer(
             //
             // Life: 245/900
             // Passed
-            let date = get_date().await;
-            let records: Records =
-                serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
-            let courses: Courses =
-                serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
             if level as usize > courses.len() || level == 0 {
                 cx.reply_to("Invalid course level!").await?;
                 return Ok(());
@@ -237,8 +233,6 @@ async fn answer(
             // Song2 Re:Master 14
             // Song3 Re:Master 14+
             // Song4 Re:Master 15
-            let courses: Courses =
-                serde_json::from_slice(&fs::read(format!("./courses-{}.json", get_date().await))?)?;
             if level as usize > courses.len() || level == 0 {
                 cx.reply_to("Invalid course level!").await?;
                 return Ok(());
@@ -259,11 +253,6 @@ async fn answer(
                 .await?
         }
         Command::Passed => {
-            let date = get_date().await;
-            let records: Records =
-                serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
-            let courses: Courses =
-                serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
             let mut output = String::new();
             for r in records {
                 // show all the passed records of players
@@ -284,11 +273,6 @@ async fn answer(
                 .await?
         }
         Command::Rank { level } => {
-            let date = get_date().await;
-            let records: Records =
-                serde_json::from_slice(&fs::read(format!("./records-{}.json", date))?)?;
-            let courses: Courses =
-                serde_json::from_slice(&fs::read(format!("./courses-{}.json", date))?)?;
             if level as usize > courses.len() || level == 0 {
                 cx.reply_to("Invalid course level!").await?;
                 return Ok(());
