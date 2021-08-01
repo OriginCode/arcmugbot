@@ -108,7 +108,7 @@ async fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
 /// Get the date of the current month
 async fn get_date() -> String {
     let datetime = Utc::today().with_timezone(TZ);
-    format!("{}-{}", datetime.year(), datetime.month() + 1)
+    format!("{}-{}", datetime.year(), datetime.month())
 }
 
 /// Parse Telegram commands
