@@ -21,6 +21,11 @@ pub enum Command {
     )]
     Calc { life: u32, results: Results },
     #[command(
+        description = "calculate the life remains using custom rule (/calc LIFE RULE: (GREAT,GOOD,MISS) [[GREAT,GOOD,MISS]..])",
+        parse_with = "score_parser"
+    )]
+    CalcCustom { life: u32, results: Results },
+    #[command(
         description = "submit maimai course of current month (/submit LEVEL [[GREAT,GOOD,MISS]..])",
         parse_with = "score_parser"
     )]

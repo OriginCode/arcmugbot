@@ -105,6 +105,28 @@ async fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
     Ok((life as u32, status))
 }
 
+/// Calculate the life remains for a custom rule
+async fn parse_score_custom(
+    life: u32,
+    rule: &(u32, u32, u32),
+    results: Results,
+) -> Result<(u32, Status)> {
+    let mut life = life as i32;
+    for result in results {
+        life -= result.0 as i32 * rule.0 as i32
+            + result.1 as i32 * rule.1 as i32
+            + result.2 as i32 * rule.2 as i32;
+    }
+    let status = if life < 0 {
+        life = 0;
+        Status::Failed
+    } else {
+        Status::Passed
+    };
+
+    Ok((life as u32, status))
+}
+
 /// Get the date of the current month
 async fn get_date() -> String {
     let datetime = Utc::today().with_timezone(TZ);
@@ -120,13 +142,25 @@ async fn answer(
     let date = get_date().await;
     let mut records: Records =
         serde_json::from_slice(&fs::read(format!("./records-{}.json", date)).await?)?;
-    let courses: Courses = serde_json::from_slice(&fs::read(format!("./courses-{}.json", date)).await?)?;
+    let courses: Courses =
+        serde_json::from_slice(&fs::read(format!("./courses-{}.json", date)).await?)?;
     match command {
         Command::Ping => cx.answer("pong!").await?,
         Command::Help => cx.reply_to(Command::descriptions()).await?,
         Command::About => cx.reply_to(ABOUT).await?,
         Command::Calc { life, results } => {
             let (remain, status) = parse_score(life, results).await?;
+            cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))
+                .await?
+        }
+        Command::CalcCustom { life, results } => {
+            let rule = results.get(0).unwrap_or_else(|| &(2, 3, 5));
+            let (remain, status) = parse_score_custom(
+                life,
+                rule,
+                results[1..].iter().map(|x| *x).collect::<Results>(),
+            )
+            .await?;
             cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))
                 .await?
         }
