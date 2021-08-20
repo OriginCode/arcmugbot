@@ -55,6 +55,7 @@ struct Song {
 struct Course {
     name: String,
     life: u32,
+    heal: u32,
     songs: Vec<Song>,
 }
 
@@ -90,39 +91,31 @@ type Courses = Vec<Course>;
 type Records = HashMap<i64, UserRecords>;
 
 /// Calculate the life remains for a course
-async fn parse_score(life: u32, results: Results) -> Result<(u32, Status)> {
-    let mut life = life as i32;
-    for result in results {
-        life -= result.0 as i32 * 2 + result.1 as i32 * 3 + result.2 as i32 * 5;
-    }
-    let status = if life < 0 {
-        life = 0;
-        Status::Failed
-    } else {
-        Status::Passed
-    };
-
-    Ok((life as u32, status))
+#[inline]
+async fn parse_score(life: u32, heal: u32, results: Results) -> Result<(u32, Status)> {
+    parse_score_custom(life, heal, &(2, 3, 5), results).await
 }
 
 /// Calculate the life remains for a custom rule
 async fn parse_score_custom(
     life: u32,
+    heal: u32,
     rule: &(u32, u32, u32),
     results: Results,
 ) -> Result<(u32, Status)> {
     let mut life = life as i32;
+    let mut status = Status::Passed;
     for result in results {
         life -= result.0 as i32 * rule.0 as i32
             + result.1 as i32 * rule.1 as i32
             + result.2 as i32 * rule.2 as i32;
+        if life < 0 {
+            life = 0;
+            status = Status::Failed;
+            break;
+        }
+        life += heal as i32;
     }
-    let status = if life < 0 {
-        life = 0;
-        Status::Failed
-    } else {
-        Status::Passed
-    };
 
     Ok((life as u32, status))
 }
@@ -148,15 +141,24 @@ async fn answer(
         Command::Ping => cx.answer("pong!").await?,
         Command::Help => cx.reply_to(Command::descriptions()).await?,
         Command::About => cx.reply_to(ABOUT).await?,
-        Command::Calc { life, results } => {
-            let (remain, status) = parse_score(life, results).await?;
+        Command::Calc {
+            life,
+            heal,
+            results,
+        } => {
+            let (remain, status) = parse_score(life, heal, results).await?;
             cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))
                 .await?
         }
-        Command::CalcCustom { life, results } => {
+        Command::CalcCustom {
+            life,
+            heal,
+            results,
+        } => {
             let rule = results.get(0).unwrap_or_else(|| &(2, 3, 5));
             let (remain, status) = parse_score_custom(
                 life,
+                heal,
                 rule,
                 results[1..].iter().map(|x| *x).collect::<Results>(),
             )
@@ -176,7 +178,7 @@ async fn answer(
                 .ok_or_else(|| ParseError::Custom("invalid user".into()))?;
             let course = &courses[level as usize - 1];
             let life = course.life;
-            let (remain, status) = parse_score(life, results).await?;
+            let (remain, status) = parse_score(life, course.heal, results).await?;
 
             records
                 .entry(user.id)
