@@ -92,7 +92,7 @@ type Records = HashMap<i64, UserRecords>;
 
 /// Calculate the life remains for a course
 #[inline]
-async fn parse_score(life: u32, heal: u32, results: Results) -> Result<(u32, Status)> {
+async fn parse_score(life: u32, heal: u32, results: Results) -> (u32, Status) {
     parse_score_custom(life, heal, &(2, 3, 5), results).await
 }
 
@@ -102,22 +102,24 @@ async fn parse_score_custom(
     heal: u32,
     rule: &(u32, u32, u32),
     results: Results,
-) -> Result<(u32, Status)> {
-    let mut life = life as i32;
+) -> (u32, Status) {
+    let mut remains = life as i32;
     let mut status = Status::Passed;
     for result in results {
-        life -= result.0 as i32 * rule.0 as i32
+        remains -= result.0 as i32 * rule.0 as i32
             + result.1 as i32 * rule.1 as i32
             + result.2 as i32 * rule.2 as i32;
-        if life < 0 {
-            life = 0;
-            status = Status::Failed;
-            break;
-        }
-        life += heal as i32;
+        remains += heal as i32;
+    }
+    remains -= heal as i32;
+    if remains < 0 {
+        remains = 0;
+        status = Status::Failed;
+    } else if remains > life as i32 {
+        remains = life as i32;
     }
 
-    Ok((life as u32, status))
+    (remains as u32, status)
 }
 
 /// Get the date of the current month
@@ -146,7 +148,7 @@ async fn answer(
             heal,
             results,
         } => {
-            let (remain, status) = parse_score(life, heal, results).await?;
+            let (remain, status) = parse_score(life, heal, results).await;
             cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))
                 .await?
         }
@@ -162,7 +164,7 @@ async fn answer(
                 rule,
                 results[1..].iter().map(|x| *x).collect::<Results>(),
             )
-            .await?;
+            .await;
             cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))
                 .await?
         }
@@ -178,7 +180,7 @@ async fn answer(
                 .ok_or_else(|| ParseError::Custom("invalid user".into()))?;
             let course = &courses[level as usize - 1];
             let life = course.life;
-            let (remain, status) = parse_score(life, course.heal, results).await?;
+            let (remain, status) = parse_score(life, course.heal, results).await;
 
             records
                 .entry(user.id)
@@ -274,7 +276,12 @@ async fn answer(
                 return Ok(());
             }
             let course = &courses[level as usize - 1];
-            let mut output = format!("{} Life: {}\n", bold(&course.name), course.life);
+            let mut output = format!(
+                "{} Life: {} Heal: {}\n",
+                bold(&course.name),
+                course.life,
+                course.heal
+            );
             for song in course.songs.iter() {
                 output = format!(
                     "{}\n{} {} {}",
@@ -364,6 +371,36 @@ async fn run() -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     run().await?;
-
     Ok(())
+}
+
+#[tokio::test]
+async fn test_parse_score() {
+    assert_eq!(
+        (0, Status::Failed),
+        parse_score(
+            900,
+            50,
+            vec![
+                (100, 100, 100),
+                (100, 100, 100),
+                (100, 100, 100),
+                (100, 100, 100)
+            ]
+        )
+        .await
+    );
+    assert_eq!(
+        (250, Status::Passed),
+        parse_score(
+            900,
+            50,
+            vec![(100, 0, 0), (100, 0, 0), (100, 0, 0), (100, 0, 0)]
+        )
+        .await
+    );
+    assert_eq!(
+        (900, Status::Passed),
+        parse_score(900, 50, vec![(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)]).await
+    );
 }
