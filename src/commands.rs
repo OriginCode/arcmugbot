@@ -1,6 +1,9 @@
+use std::{collections::VecDeque, str::SplitWhitespace};
 use teloxide::utils::command::{BotCommand, ParseError};
 
-pub type Results = Vec<(u32, u32, u32)>;
+use crate::Submission;
+
+pub type Results = VecDeque<[u32; 3]>;
 
 // Commands
 #[derive(BotCommand)]
@@ -17,22 +20,14 @@ pub enum Command {
     About,
     #[command(
         description = "calculate the life remains (/calc LIFE HEAL [[GREAT,GOOD,MISS]..])",
-        parse_with = "score_parser"
+        parse_with = "calc_parser"
     )]
-    Calc {
-        life: u32,
-        heal: u32,
-        results: Results,
-    },
+    Calc { submission: Submission },
     #[command(
         description = "calculate the life remains using custom rule (/calc LIFE HEAL (RULE: [GREAT,GOOD,MISS]) [[GREAT,GOOD,MISS]..])",
-        parse_with = "score_parser"
+        parse_with = "calc_parser"
     )]
-    CalcCustom {
-        life: u32,
-        heal: u32,
-        results: Results,
-    },
+    CalcCustom { submission: Submission },
     #[command(
         description = "submit maimai course of current month (/submit LEVEL [[GREAT,GOOD,MISS]..])",
         parse_with = "submit_parser"
@@ -63,18 +58,21 @@ fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {
         .map_err(|e| ParseError::IncorrectFormat(e.into()))
 }
 
-macro_rules! yield_into {
-    ($v:expr => ($x:ident)) => {
-        $x = next_str_into_u32($v.next())?;
-    };
-    ($v:expr => ($x:ident, $($y:ident),+)) => {
-        $x = next_str_into_u32($v.next())?;
-        yield_into!($v => ($($y),+));
+fn parse_score(parts: SplitWhitespace) -> Result<Results, ParseError> {
+    let mut results = VecDeque::new();
+    for i in parts {
+        let mut result = i.splitn(3, ',');
+        results.push_back([
+            next_str_into_u32(result.next())?,
+            next_str_into_u32(result.next())?,
+            next_str_into_u32(result.next())?,
+        ])
     }
+    Ok(results)
 }
 
 /// Parse a score calc command
-fn score_parser(input: String) -> Result<(u32, u32, Results), ParseError> {
+fn calc_parser(input: String) -> Result<(Submission,), ParseError> {
     // The command should satisfy this pattern:
     // /command LIFE HEAL [[GREAT,GOOD,MISS]..]
     //
@@ -83,17 +81,18 @@ fn score_parser(input: String) -> Result<(u32, u32, Results), ParseError> {
     let mut parts = input.split_whitespace();
     let marker = next_str_into_u32(parts.next())?;
     let heal = next_str_into_u32(parts.next())?;
-    let mut results = Vec::new();
-    for i in parts {
-        let mut result = i.splitn(3, ',');
-        let great;
-        let good;
-        let miss;
-        yield_into!(result => (great, good, miss));
-        results.push((great, good, miss))
+    let mut results = parse_score(parts)?;
+    let mut rule = [2, 3, 5];
+    if results.len() == 4 {
+        rule = results.pop_front().unwrap();
     }
 
-    Ok((marker, heal, results))
+    Ok((Submission {
+        life: marker,
+        heal,
+        rule,
+        results,
+    },))
 }
 
 /// Parse a submit command
@@ -105,15 +104,7 @@ fn submit_parser(input: String) -> Result<(u32, Results), ParseError> {
     // /submit 10 10,3,1 13,2,0 3,0,0 0,0,0
     let mut parts = input.split_whitespace();
     let level = next_str_into_u32(parts.next())?;
-    let mut results = Vec::new();
-    for i in parts {
-        let mut result = i.splitn(3, ',');
-        let great;
-        let good;
-        let miss;
-        yield_into!(result => (great, good, miss));
-        results.push((great, good, miss))
-    }
+    let results = parse_score(parts)?;
 
     Ok((level, results))
 }

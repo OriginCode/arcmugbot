@@ -1,10 +1,12 @@
 use anyhow::Result;
 use chrono::{Datelike, Utc};
-use chrono_tz::{Asia::Shanghai, Tz};
+use chrono_tz::Tz;
 use commands::{Command, Results};
 use indexmap::IndexMap;
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, error::Error, fmt};
+use std::{
+    collections::{HashMap, VecDeque},
+    error::Error,
+};
 use teloxide::{
     prelude::*,
     types::ParseMode,
@@ -12,119 +14,80 @@ use teloxide::{
         command::{BotCommand, ParseError},
         markdown::*,
     },
+    RequestError,
 };
 use tokio::fs;
 
 mod commands;
+mod course;
+mod macros;
+mod record;
+
+use course::Courses;
+use record::{Record, Records, Status, UserRecords};
 
 const ABOUT: &str =
     "Arcade MUG Bot, designed by OriginCode.\nGitHub: https://github.com/OriginCode/arcmugbot";
 const TOKEN: &str = "";
-const TZ: &Tz = &Shanghai;
+const TZ: Tz = chrono_tz::Asia::Shanghai;
+const RULE: [u32; 3] = [2, 3, 5];
 
-/// maimai difficulties
-#[derive(Deserialize, Debug)]
-enum Difficulty {
-    Easy,
-    Advanced,
-    Expert,
-    Master,
-    ReMaster,
-}
-
-impl fmt::Display for Difficulty {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Difficulty::Easy => write!(f, "Easy"),
-            Difficulty::Advanced => write!(f, "Advanced"),
-            Difficulty::Expert => write!(f, "Expert"),
-            Difficulty::Master => write!(f, "Master"),
-            Difficulty::ReMaster => write!(f, "Re:Master"),
-        }
-    }
-}
-
-#[derive(Deserialize, Debug)]
-struct Song {
-    title: String,
-    difficulty: Difficulty,
-    level: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct Course {
-    name: String,
+pub struct Submission {
     life: u32,
     heal: u32,
-    songs: Vec<Song>,
-}
-
-/// An enum showing if the course is passed
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
-enum Status {
-    Passed,
-    Failed,
-}
-
-impl fmt::Display for Status {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Status::Passed => write!(f, "Passed"),
-            Status::Failed => write!(f, "Failed"),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Record {
-    life: u32,
-    status: Status,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct UserRecords {
-    fullname: String,
-    records: HashMap<u32, Record>,
-}
-
-type Courses = Vec<Course>;
-type Records = HashMap<i64, UserRecords>;
-
-/// Calculate the life remains for a course
-#[inline]
-async fn parse_score(life: u32, heal: u32, results: Results) -> (u32, Status) {
-    parse_score_custom(life, heal, &(2, 3, 5), results).await
-}
-
-/// Calculate the life remains for a custom rule
-async fn parse_score_custom(
-    life: u32,
-    heal: u32,
-    rule: &(u32, u32, u32),
+    rule: [u32; 3],
     results: Results,
-) -> (u32, Status) {
-    let mut remains = life as i32;
-    let mut status = Status::Passed;
-    for result in results {
-        remains -= result.0 as i32 * rule.0 as i32
-            + result.1 as i32 * rule.1 as i32
-            + result.2 as i32 * rule.2 as i32;
-        remains += heal as i32;
+}
+
+impl Default for Submission {
+    fn default() -> Self {
+        Self {
+            life: 900,
+            heal: 20,
+            rule: RULE,
+            results: VecDeque::new(),
+        }
     }
-    remains -= heal as i32;
-    if remains < 0 {
-        remains = 0;
-        status = Status::Failed;
-    } else if remains > life as i32 {
-        remains = life as i32;
+}
+
+/// Calculate the life remains
+async fn calc_life(submission: &Submission) -> (u32, Status) {
+    let mut remains = submission.life;
+    for result in submission.results.iter() {
+        if let Some(val) = remains.checked_sub(
+            result
+                .iter()
+                .zip(submission.rule.iter())
+                .map(|x| x.0 * x.1)
+                .sum(),
+        ) {
+            remains = val;
+            remains += submission.heal;
+        } else {
+            return (0, Status::Failed);
+        }
+    }
+    remains -= submission.heal;
+    if remains > submission.life {
+        remains = submission.life;
     }
 
-    (remains as u32, status)
+    (remains, Status::Passed)
+}
+
+#[inline]
+async fn calc_cmd(
+    cx: UpdateWithCx<AutoSend<Bot>, Message>,
+    submission: &Submission,
+) -> Result<Message, RequestError> {
+    let (remain, status) = calc_life(submission).await;
+    cx.reply_to(format!("Life: {}/{}\n{}", remain, submission.life, status))
+        .await
 }
 
 /// Get the date of the current month
 async fn get_date() -> String {
-    let datetime = Utc::today().with_timezone(TZ);
+    let datetime = Utc::today().with_timezone(&TZ);
     format!("{}-{}", datetime.year(), datetime.month())
 }
 
@@ -143,31 +106,8 @@ async fn answer(
         Command::Ping => cx.answer("pong!").await?,
         Command::Help => cx.reply_to(Command::descriptions()).await?,
         Command::About => cx.reply_to(ABOUT).await?,
-        Command::Calc {
-            life,
-            heal,
-            results,
-        } => {
-            let (remain, status) = parse_score(life, heal, results).await;
-            cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))
-                .await?
-        }
-        Command::CalcCustom {
-            life,
-            heal,
-            results,
-        } => {
-            let rule = results.get(0).unwrap_or_else(|| &(2, 3, 5));
-            let (remain, status) = parse_score_custom(
-                life,
-                heal,
-                rule,
-                results[1..].iter().map(|x| *x).collect::<Results>(),
-            )
-            .await;
-            cx.reply_to(format!("Life: {}/{}\n{}", remain, life, status))
-                .await?
-        }
+        Command::Calc { submission } => calc_cmd(cx, &submission).await?,
+        Command::CalcCustom { submission } => calc_cmd(cx, &submission).await?,
         Command::Submit { level, results } => {
             if level as usize > courses.len() || level == 0 {
                 cx.reply_to("Invalid course level!").await?;
@@ -180,7 +120,13 @@ async fn answer(
                 .ok_or_else(|| ParseError::Custom("invalid user".into()))?;
             let course = &courses[level as usize - 1];
             let life = course.life;
-            let (remain, status) = parse_score(life, course.heal, results).await;
+            let (remain, status) = calc_life(&Submission {
+                life,
+                heal: course.heal,
+                rule: RULE,
+                results,
+            })
+            .await;
 
             records
                 .entry(user.id)
@@ -378,29 +324,37 @@ async fn main() -> Result<()> {
 async fn test_parse_score() {
     assert_eq!(
         (0, Status::Failed),
-        parse_score(
-            900,
-            50,
-            vec![
-                (100, 100, 100),
-                (100, 100, 100),
-                (100, 100, 100),
-                (100, 100, 100)
+        parse_score(&Submission {
+            life: 900,
+            heal: 50,
+            rule: RULE,
+            results: vecdeque![
+                [100, 100, 100],
+                [100, 100, 100],
+                [100, 100, 100],
+                [100, 100, 100]
             ]
-        )
+        })
         .await
     );
     assert_eq!(
         (250, Status::Passed),
-        parse_score(
-            900,
-            50,
-            vec![(100, 0, 0), (100, 0, 0), (100, 0, 0), (100, 0, 0)]
-        )
+        parse_score(&Submission {
+            life: 900,
+            heal: 50,
+            rule: RULE,
+            results: vecdeque![[100, 0, 0], [100, 0, 0], [100, 0, 0], [100, 0, 0]]
+        })
         .await
     );
     assert_eq!(
         (900, Status::Passed),
-        parse_score(900, 50, vec![(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)]).await
+        parse_score(&Submission {
+            life: 900,
+            heal: 50,
+            rule: RULE,
+            results: vecdeque![[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        })
+        .await
     );
 }
