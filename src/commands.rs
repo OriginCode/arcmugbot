@@ -50,6 +50,11 @@ pub enum Command {
         parse_with = "split"
     )]
     Rank { level: u32 },
+    #[command(
+        description = "get user's profile on Arcana with given game version and DJ name",
+        parse_with = "split"
+    )]
+    IIDXProfile { version: u32, dj_name: String },
 }
 
 fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {

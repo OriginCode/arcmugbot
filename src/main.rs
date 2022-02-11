@@ -18,17 +18,20 @@ use teloxide::{
 };
 use tokio::fs;
 
+mod arcana;
 mod commands;
 mod course;
 mod macros;
 mod record;
 
+use arcana::*;
 use course::Courses;
 use record::{Record, Records, Status, UserRecords};
 
 const ABOUT: &str =
     "Arcade MUG Bot, designed by OriginCode.\nGitHub: https://github.com/OriginCode/arcmugbot";
 const TOKEN: &str = "";
+const ARCANA_TOKEN: &str = "";
 const TZ: Tz = chrono_tz::Asia::Shanghai;
 const RULE: [u32; 3] = [2, 3, 5];
 
@@ -88,7 +91,7 @@ async fn calc_cmd(
 /// Get the date of the current month
 async fn get_date() -> String {
     let datetime = Utc::today().with_timezone(&TZ);
-    format!("{}-{}", datetime.year(), datetime.month())
+    format!("{}-{}", datetime.year(), 1)
 }
 
 /// Parse Telegram commands
@@ -297,6 +300,41 @@ async fn answer(
                 .parse_mode(ParseMode::MarkdownV2)
                 .await?
         }
+        Command::IIDXProfile { version, dj_name } => {
+            let output = if let Some(profile) = iidx::profile::get_profile(version, &dj_name)
+                .await? {
+                let sp = profile.sp;
+                let dp = profile.dp;
+                format!(
+                    "DJ NAME: {}\nIIDX ID: {}\n\n{}\nDJ POINTS: {}\nPLAYS: {}\n\
+                RANKS: {}\n\n{}\nDJ POINTS: {}\nPLAYS: {}\n\
+                RANKS: {}",
+                    escape(&dj_name),
+                    escape(&profile.iidx_id),
+                    bold("SP"),
+                    sp.dj_points,
+                    sp.plays,
+                    if let Some(ranks) = sp.rank  {
+                        ranks
+                    } else {
+                        "NULL".to_owned()
+                    },
+                    bold("DP"),
+                    dp.dj_points,
+                    dp.plays,
+                    if let Some(ranks) = dp.rank {
+                        ranks
+                    } else {
+                        "NULL".to_owned()
+                    }
+                )
+            } else {
+                "Unknown DJ".to_owned()
+            };
+            cx.reply_to(output)
+                .parse_mode(ParseMode::MarkdownV2)
+                .await?
+        }
     };
 
     Ok(())
@@ -318,43 +356,4 @@ async fn run() -> Result<()> {
 async fn main() -> Result<()> {
     run().await?;
     Ok(())
-}
-
-#[tokio::test]
-async fn test_parse_score() {
-    assert_eq!(
-        (0, Status::Failed),
-        parse_score(&Submission {
-            life: 900,
-            heal: 50,
-            rule: RULE,
-            results: vecdeque![
-                [100, 100, 100],
-                [100, 100, 100],
-                [100, 100, 100],
-                [100, 100, 100]
-            ]
-        })
-        .await
-    );
-    assert_eq!(
-        (250, Status::Passed),
-        parse_score(&Submission {
-            life: 900,
-            heal: 50,
-            rule: RULE,
-            results: vecdeque![[100, 0, 0], [100, 0, 0], [100, 0, 0], [100, 0, 0]]
-        })
-        .await
-    );
-    assert_eq!(
-        (900, Status::Passed),
-        parse_score(&Submission {
-            life: 900,
-            heal: 50,
-            rule: RULE,
-            results: vecdeque![[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
-        })
-        .await
-    );
 }
