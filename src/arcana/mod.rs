@@ -8,7 +8,7 @@ pub async fn build_get_request(url: &str) -> Result<Response> {
         .user_agent("curl/7.81.0")
         .build()?
         .get(url)
-        .bearer_auth(TOKEN)
+        .bearer_auth(ARCANA_TOKEN)
         .send()
         .await?)
 }
