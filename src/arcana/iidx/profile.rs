@@ -29,8 +29,10 @@ struct ProfileResp {
 }
 
 pub async fn get_profile(version: u32, dj_name: &str) -> Result<Option<Profile>> {
-    let request = build_get_request(format!("{}{}/profiles/?dj_name={}", PROFILES_URL,
-                                            version, dj_name).as_str()).await?;
+    let request = build_get_request(
+        format!("{}{}/profiles/?dj_name={}", PROFILES_URL, version, dj_name).as_str(),
+    )
+    .await?;
     let mut profile_resp: ProfileResp = request.json().await?;
     Ok(profile_resp.items.pop())
 }
