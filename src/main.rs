@@ -301,36 +301,34 @@ async fn answer(
                 .await?
         }
         Command::IIDXProfile { version, dj_name } => {
-            let output =
-                if let Some(profile) = iidx::profile::get_profile(version, &dj_name).await? {
-                    let sp = profile.sp;
-                    let dp = profile.dp;
-                    format!(
-                        "DJ NAME: {}\nIIDX ID: {}\n\n{}\nDJ POINTS: {}\nPLAYS: {}\n\
+            let mut output = String::new();
+            for profile in iidx::profile::get_profile(version, &dj_name).await? {
+                let sp = profile.sp;
+                let dp = profile.dp;
+                output += &format!(
+                    "DJ NAME: {}\nIIDX ID: {}\n\n{}\nDJ POINTS: {}\nPLAYS: {}\n\
                 RANKS: {}\n\n{}\nDJ POINTS: {}\nPLAYS: {}\n\
                 RANKS: {}",
-                        escape(&dj_name),
-                        escape(&profile.iidx_id),
-                        bold("SP"),
-                        sp.dj_points,
-                        sp.plays,
-                        if let Some(ranks) = sp.rank {
-                            ranks
-                        } else {
-                            "NULL".to_owned()
-                        },
-                        bold("DP"),
-                        dp.dj_points,
-                        dp.plays,
-                        if let Some(ranks) = dp.rank {
-                            ranks
-                        } else {
-                            "NULL".to_owned()
-                        }
-                    )
-                } else {
-                    "Unknown DJ".to_owned()
-                };
+                    escape(&dj_name),
+                    escape(&profile.iidx_id),
+                    bold("SP"),
+                    sp.dj_points,
+                    sp.plays,
+                    if let Some(ranks) = sp.rank {
+                        ranks
+                    } else {
+                        "NULL".to_owned()
+                    },
+                    bold("DP"),
+                    dp.dj_points,
+                    dp.plays,
+                    if let Some(ranks) = dp.rank {
+                        ranks
+                    } else {
+                        "NULL".to_owned()
+                    }
+                )
+            }
             cx.reply_to(output)
                 .parse_mode(ParseMode::MarkdownV2)
                 .await?

@@ -1,9 +1,8 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+use super::IIDX_URL;
 use crate::arcana::build_get_request;
-
-const PROFILES_URL: &str = "https://arcana.nu/api/v1/iidx/";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Score {
@@ -15,7 +14,7 @@ pub struct Score {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Profile {
     #[serde(rename = "_id")]
-    id: String,
+    pub id: String,
     pub dj_name: String,
     pub iidx_id: String,
     pub sp: Score,
@@ -28,22 +27,22 @@ struct ProfileResp {
     items: Vec<Profile>,
 }
 
-pub async fn get_profile(version: u32, dj_name: &str) -> Result<Option<Profile>> {
-    let request = build_get_request(
-        format!("{}{}/profiles/?dj_name={}", PROFILES_URL, version, dj_name).as_str(),
-    )
-    .await?;
-    let mut profile_resp: ProfileResp = request.json().await?;
-    Ok(profile_resp.items.pop())
+pub async fn get_profile(version: u32, dj_name: &str) -> Result<Vec<Profile>> {
+    let request = build_get_request(IIDX_URL.join(&format!("{}/", version))?.join("profiles/")?)
+        .await?
+        .query(&[("dj_name", dj_name)])
+        .send()
+        .await?;
+    let profile_resp: ProfileResp = request.json().await?;
+    Ok(profile_resp.items)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::arcana::build_get_request;
-    use crate::arcana::iidx::profile::{get_profile, PROFILES_URL};
+    use super::*;
 
     #[tokio::test]
     async fn test_get_profile() {
-        println!("{:?}", get_profile(28, "ORIGIN").await.unwrap())
+        println!("{:?}", get_profile(28, "A").await.unwrap())
     }
 }
