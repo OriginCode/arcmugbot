@@ -308,7 +308,7 @@ async fn answer(
                 output += &format!(
                     "DJ NAME: {}\nIIDX ID: {}\n\n{}\nDJ POINTS: {}\nPLAYS: {}\n\
                 RANKS: {}\n\n{}\nDJ POINTS: {}\nPLAYS: {}\n\
-                RANKS: {}",
+                RANKS: {}\n\n",
                     escape(&dj_name),
                     escape(&profile.iidx_id),
                     bold("SP"),
