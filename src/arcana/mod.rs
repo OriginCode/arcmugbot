@@ -13,7 +13,7 @@ pub async fn build_get_request(url: impl IntoUrl) -> Result<RequestBuilder> {
 
 #[cfg(test)]
 mod tests {
-    use crate::arcana::build_get_request;
+    use super::*;
 
     #[tokio::test]
     async fn test_get() {

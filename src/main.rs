@@ -24,12 +24,12 @@ mod course;
 mod macros;
 mod record;
 
-use crate::iidx::{
+use arcana::iidx::{
     chart::{get_charts, Chart},
     music::{get_music, get_music_folder},
     score_history::get_most_recent,
+    profile::{get_profile, get_profile_using_id}
 };
-use arcana::*;
 use course::Courses;
 use record::{Record, Records, Status, UserRecords};
 
@@ -306,11 +306,11 @@ async fn answer(
                 .await?
         }
         Command::IIDXProfile { version, param } => {
-            let dj_name_profiles = iidx::profile::get_profile(version, &param).await?;
+            let dj_name_profiles = get_profile(version, &param).await?;
             let profiles = if !dj_name_profiles.is_empty() {
                 dj_name_profiles
             } else {
-                iidx::profile::get_profile_using_id(version, &param).await?
+                get_profile_using_id(version, &param).await?
             };
             let output = profiles
                 .iter()
@@ -370,11 +370,11 @@ async fn answer(
                 .await?
         }
         Command::IIDXRecent { version, param } => {
-            let dj_name_profiles = iidx::profile::get_profile(version, &param).await?;
+            let dj_name_profiles = get_profile(version, &param).await?;
             let mut profiles = if !dj_name_profiles.is_empty() {
                 dj_name_profiles
             } else {
-                iidx::profile::get_profile_using_id(version, &param).await?
+                get_profile_using_id(version, &param).await?
             };
             let mut output = "Not found".to_owned();
             if let Some(p) = profiles.pop() {

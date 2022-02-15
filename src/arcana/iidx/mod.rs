@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use reqwest::{Response, Url};
 use serde::Serialize;
 
-use crate::build_get_request;
+use super::build_get_request;
 
 lazy_static! {
     static ref IIDX_URL: Url = Url::parse("https://arcana.nu/api/v1/iidx/").unwrap();
