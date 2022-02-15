@@ -1,10 +1,10 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{fmt, cmp::Ordering};
 
 use super::get_resp;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum Lamp {
     #[serde(rename = "NO_PLAY")]
     NoPlay,
@@ -38,7 +38,7 @@ impl fmt::Display for Lamp {
         }
     }
 }
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub struct ScoreHistory {
     #[serde(rename = "_id")]
     pub id: String,
@@ -53,6 +53,18 @@ pub struct ScoreHistory {
     pub timestamp: String,
 }
 
+impl Ord for ScoreHistory {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.timestamp.cmp(&other.timestamp)
+    }
+}
+
+impl PartialOrd for ScoreHistory {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 struct ScoreHistoryResp {
     #[serde(rename = "_items")]
@@ -61,7 +73,8 @@ struct ScoreHistoryResp {
 
 pub async fn get_score_history(version: u32, profile_id: &str) -> Result<Vec<ScoreHistory>> {
     let request = get_resp(version, "score_history/", &[("profile_id", profile_id)]).await?;
-    let profile_resp: ScoreHistoryResp = request.json().await?;
+    let mut profile_resp: ScoreHistoryResp = request.json().await?;
+    profile_resp.items.sort();
     Ok(profile_resp.items)
 }
 
