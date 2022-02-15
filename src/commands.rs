@@ -51,14 +51,24 @@ pub enum Command {
     )]
     Rank { level: u32 },
     #[command(
-        description = "get user's profile on Arcana with given game version and DJ name/IIDX ID",
+        description = "get user's profile on Arcana with given game version and DJ name/IIDX ID (/iidxprofile VERSION DJ_NAME/IIDX_ID)",
         parse_with = "split"
     )]
     IIDXProfile { version: u32, param: String },
+    #[command(
+        description = "search IIDX music with given version and title (/iidxmusic VERSION TITLE)",
+        parse_with = "split_into_two"
+    )]
+    IIDXMusic { version: u32, title: String },
+    #[command(
+        description = "get recent score (/iidxrecent VERSION DJ_NAME/IIDX_ID)",
+        parse_with = "split"
+    )]
+    IIDXRecent { version: u32, param: String },
 }
 
 fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {
-    from.ok_or_else(|| ParseError::Custom("invalid submission".into()))?
+    from.ok_or_else(|| ParseError::Custom("invalid input".into()))?
         .parse::<u32>()
         .map_err(|e| ParseError::IncorrectFormat(e.into()))
 }
@@ -112,4 +122,12 @@ fn submit_parser(input: String) -> Result<(u32, Results), ParseError> {
     let results = parse_score(parts)?;
 
     Ok((level, results))
+}
+
+fn split_into_two(input: String) -> Result<(u32, String), ParseError> {
+    let mut parts = input.splitn(2, ' ');
+    Ok((
+        next_str_into_u32(parts.next())?,
+        parts.next().unwrap_or("").to_owned(),
+    ))
 }

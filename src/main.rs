@@ -24,6 +24,11 @@ mod course;
 mod macros;
 mod record;
 
+use crate::iidx::{
+    chart::{get_charts, Chart},
+    music::{get_music, get_music_folder},
+    score_history::get_most_recent,
+};
 use arcana::*;
 use course::Courses;
 use record::{Record, Records, Status, UserRecords};
@@ -305,7 +310,7 @@ async fn answer(
             let profiles = if !dj_name_profiles.is_empty() {
                 dj_name_profiles
             } else {
-                iidx::profile::get_profile_id(version, &param).await?
+                iidx::profile::get_profile_using_id(version, &param).await?
             };
             let output = profiles
                 .iter()
@@ -338,6 +343,62 @@ async fn answer(
                 })
                 .collect::<Vec<String>>()
                 .join("\n------\n");
+            cx.reply_to(output)
+                .parse_mode(ParseMode::MarkdownV2)
+                .await?
+        }
+        Command::IIDXMusic { version, title } => {
+            let music = get_music_folder(version, version).await?;
+            let mut output = "Not found".to_owned();
+            for m in music {
+                if m.title == title {
+                    let charts = get_charts(version, &m.id).await?;
+                    output = format!(
+                        "{}\n{}\n{}\n\nDifficulties:\n",
+                        escape(&m.genre),
+                        escape(&m.title),
+                        escape(&m.artist)
+                    );
+                    for c in charts {
+                        output
+                            .push_str(&format!("{} {} {}\n", c.play_style, c.difficulty, c.rating));
+                    }
+                }
+            }
+            cx.reply_to(output)
+                .parse_mode(ParseMode::MarkdownV2)
+                .await?
+        }
+        Command::IIDXRecent { version, param } => {
+            let dj_name_profiles = iidx::profile::get_profile(version, &param).await?;
+            let mut profiles = if !dj_name_profiles.is_empty() {
+                dj_name_profiles
+            } else {
+                iidx::profile::get_profile_using_id(version, &param).await?
+            };
+            let mut output = "Not found".to_owned();
+            if let Some(p) = profiles.pop() {
+                if let Some(r) = get_most_recent(version, &p.id).await? {
+                    let music = get_music(28, &r.music_id).await?.unwrap();
+                    let mut chart = Chart::default();
+                    for c in get_charts(28, &r.music_id).await? {
+                        if c.id == r.chart_id {
+                            chart = c;
+                        }
+                    }
+                    output = format!(
+                        "{}\n{} {} {}\n\nLamp: {}\nEX Score: {}\nMiss Count: {}\n\nTimestamp: {}",
+                        escape(&music.title),
+                        chart.play_style,
+                        chart.difficulty,
+                        chart.rating,
+                        r.lamp,
+                        r.ex_score,
+                        r.miss_count.unwrap_or_default(),
+                        escape(&r.timestamp),
+                    )
+                }
+            }
             cx.reply_to(output)
                 .parse_mode(ParseMode::MarkdownV2)
                 .await?
