@@ -27,3 +27,8 @@ pub mod chart;
 pub mod music;
 pub mod profile;
 pub mod score_history;
+
+pub use chart::*;
+pub use music::*;
+pub use profile::*;
+pub use score_history::*;
