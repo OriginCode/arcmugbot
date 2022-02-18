@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use crate::arcana::iidx::{Profile, get_profile, get_profile_using_id};
+use crate::arcana::iidx::{get_profile, get_profile_using_id, Profile};
 
 async fn get_profiles(
     version: u32,
@@ -15,10 +15,10 @@ async fn get_profiles(
     })
 }
 
-pub mod profile;
 pub mod music;
+pub mod profile;
 pub mod recent;
 
-pub use profile::profile;
 pub use music::music;
+pub use profile::profile;
 pub use recent::recent;

@@ -1,5 +1,5 @@
-use teloxide::{prelude2::*,utils::markdown::*, types::ParseMode};
 use std::error::Error;
+use teloxide::{prelude2::*, types::ParseMode, utils::markdown::*};
 
 use super::get_profiles;
 

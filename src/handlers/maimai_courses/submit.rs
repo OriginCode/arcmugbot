@@ -14,7 +14,7 @@ use crate::{
         submission::Submission,
         UserRecords, RULE,
     },
-    DATE
+    DATE,
 };
 
 pub async fn submit(

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::{fmt, cmp::Ordering};
+use std::{cmp::Ordering, fmt};
 
 use super::get_resp;
 
