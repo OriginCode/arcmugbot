@@ -46,4 +46,10 @@ mod tests {
     async fn test_get_profile() {
         println!("{:?}", get_profile(28, "1015-0869").await.unwrap())
     }
+
+    // test get profile using id
+    #[tokio::test]
+    async fn test_get_profile_using_id() {
+        println!("{:?}", get_profile_using_id(28, "ORIGIN").await.unwrap())
+    }
 }
