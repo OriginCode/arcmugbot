@@ -8,7 +8,7 @@ use teloxide::{
 use crate::maimai_courses::{course::Courses, record::Records};
 
 pub async fn score(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     level: u32,
     courses: &Courses,

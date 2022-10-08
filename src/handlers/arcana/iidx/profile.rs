@@ -4,7 +4,7 @@ use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
 use super::get_profiles;
 
 pub async fn profile(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     version: u32,
     param: &str,

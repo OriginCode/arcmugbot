@@ -29,7 +29,7 @@ pub async fn calc_life(submission: &Submission) -> (u32, Status) {
 }
 
 pub async fn calc(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     submission: &Submission,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {

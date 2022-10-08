@@ -2,7 +2,7 @@ use serde::Deserialize;
 use std::fmt;
 
 /// maimai difficulties
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub enum Difficulty {
     Easy,
     Advanced,
@@ -23,14 +23,14 @@ impl fmt::Display for Difficulty {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Song {
     pub title: String,
     pub difficulty: Difficulty,
     pub level: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Course {
     pub name: String,
     pub life: u32,

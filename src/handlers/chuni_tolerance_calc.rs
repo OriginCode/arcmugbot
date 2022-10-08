@@ -4,14 +4,14 @@ use teloxide::prelude::*;
 const MAX_SCORE: u32 = 1010000;
 
 pub async fn tolerance_calc(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     notes: u32,
     target: &str,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let single = MAX_SCORE as f32 / notes as f32;
-    let single_justice = (single as f32) / 1.01;
-    let single_attack = (single as f32) / 2.02;
+    let single_justice = single / 1.01;
+    let single_attack = single / 2.02;
 
     let (target, target_score) = match target.to_lowercase().as_str() {
         "sss+" => ("SSS+", 1009000),

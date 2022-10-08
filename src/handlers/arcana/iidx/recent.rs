@@ -5,7 +5,7 @@ use super::get_profiles;
 use crate::arcana::iidx::{get_charts, get_most_recent, get_music, Chart};
 
 pub async fn recent(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     version: u32,
     param: &str,

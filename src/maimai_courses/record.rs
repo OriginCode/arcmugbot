@@ -17,13 +17,13 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Record {
     pub life: u32,
     pub status: Status,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserRecords {
     pub fullname: String,
     pub records: HashMap<u32, Record>,

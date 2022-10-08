@@ -4,7 +4,7 @@ use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
 use crate::maimai_courses::{Courses, Records, Status};
 
 pub async fn passed(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     courses: &Courses,
     records: &Records,

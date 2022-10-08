@@ -18,7 +18,7 @@ use crate::{
 };
 
 pub async fn submit(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     level: u32,
     results: Results,
@@ -35,7 +35,7 @@ pub async fn submit(
     let user = message
         .from()
         .ok_or_else(|| ParseError::Custom("invalid user".into()))?;
-    let course = &courses[level as usize - 1];
+    let course = &courses.get(level as usize - 1).unwrap();
     let life = course.life;
     let (remain, status) = calc_life(&Submission {
         life,

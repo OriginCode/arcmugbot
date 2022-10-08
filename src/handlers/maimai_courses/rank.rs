@@ -5,7 +5,7 @@ use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
 use crate::maimai_courses::{Courses, Records, Status};
 
 pub async fn rank(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     level: u32,
     courses: &Courses,

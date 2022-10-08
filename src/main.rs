@@ -3,7 +3,7 @@ use chrono_tz::Tz;
 use commands::Command;
 use lazy_static::lazy_static;
 use std::error::Error;
-use teloxide::{prelude::*, utils::command::BotCommands};
+use teloxide::{filter_command, prelude::*, types::Update, utils::command::BotCommands};
 use tokio::fs;
 
 mod arcana;
@@ -26,15 +26,12 @@ lazy_static! {
 
 /// Parse Telegram commands
 async fn answer(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     command: Command,
+    mut records: Records,
+    courses: Courses,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
-    // load files
-    let mut records: Records =
-        serde_json::from_slice(&fs::read(format!("./records-{}.json", *DATE)).await?)?;
-    let courses: Courses =
-        serde_json::from_slice(&fs::read(format!("./courses-{}.json", *DATE)).await?)?;
     match command {
         Command::Ping => {
             bot.send_message(message.chat.id, "pong!").await?;
@@ -87,11 +84,27 @@ async fn answer(
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     pretty_env_logger::init();
     log::info!("Starting arcmugbot...");
 
-    let bot = Bot::new(TOKEN).auto_send();
+    let bot = Bot::new(TOKEN);
 
-    teloxide::commands_repl(bot, answer, Command::ty()).await;
+    // load files
+    let records: Records =
+        serde_json::from_slice(&fs::read(format!("./records-{}.json", *DATE)).await?)?;
+    let courses: Courses =
+        serde_json::from_slice(&fs::read(format!("./courses-{}.json", *DATE)).await?)?;
+
+    Dispatcher::builder(
+        bot,
+        Update::filter_message().branch(filter_command::<Command, _>().endpoint(answer)),
+    )
+    .dependencies(dptree::deps![records, courses])
+    .enable_ctrlc_handler()
+    .build()
+    .dispatch()
+    .await;
+
+    Ok(())
 }

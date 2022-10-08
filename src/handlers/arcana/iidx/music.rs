@@ -4,7 +4,7 @@ use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
 use crate::arcana::iidx::{get_charts, get_music_folder};
 
 pub async fn music(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     version: u32,
     title: &str,

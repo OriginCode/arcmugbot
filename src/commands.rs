@@ -8,7 +8,7 @@ pub type Results = VecDeque<[u32; 3]>;
 // Commands
 #[derive(BotCommands, Clone)]
 #[command(
-    rename = "lowercase",
+    rename_rule = "lowercase",
     description = "The following commands are available:"
 )]
 pub enum Command {
@@ -20,35 +20,26 @@ pub enum Command {
     About,
     #[command(
         description = "calculate the life remains (/calc LIFE HEAL [[GREAT,GOOD,MISS]..])",
-        parse_with = "calc_parser"
+        parse_with = calc_parser
     )]
     Calc { submission: Submission },
     #[command(
         description = "calculate the life remains using custom rule (/calc LIFE HEAL (RULE: [GREAT,GOOD,MISS]) [[GREAT,GOOD,MISS]..])",
-        parse_with = "calc_parser"
+        parse_with = calc_parser
     )]
     CalcCustom { submission: Submission },
     #[command(
         description = "submit maimai course of current month (/submit LEVEL [[GREAT,GOOD,MISS]..])",
-        parse_with = "submit_parser"
+        parse_with = submit_parser
     )]
     Submit { level: u32, results: Results },
-    #[command(
-        description = "check your course score (/score LEVEL)",
-        parse_with = "split"
-    )]
+    #[command(description = "check your course score (/score LEVEL)")]
     Score { level: u32 },
-    #[command(
-        description = "get course details (/query LEVEL)",
-        parse_with = "split"
-    )]
+    #[command(description = "get course details (/query LEVEL)")]
     Query { level: u32 },
     #[command(description = "get players' passed courses")]
     Passed,
-    #[command(
-        description = "get rank for the course level (/rank LEVEL)",
-        parse_with = "split"
-    )]
+    #[command(description = "get rank for the course level (/rank LEVEL)")]
     Rank { level: u32 },
     #[command(
         description = "get user's profile on Arcana with given game version and DJ name/IIDX ID (/iidxprofile VERSION DJ_NAME/IIDX_ID)",
@@ -57,7 +48,7 @@ pub enum Command {
     IIDXProfile { version: u32, param: String },
     #[command(
         description = "search IIDX music with given version and title (/iidxmusic VERSION TITLE)",
-        parse_with = "split_into_two"
+        parse_with = split_into_two
     )]
     IIDXMusic { version: u32, title: String },
     #[command(

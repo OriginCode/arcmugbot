@@ -4,7 +4,7 @@ use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
 use crate::maimai_courses::course::Courses;
 
 pub async fn query(
-    bot: AutoSend<Bot>,
+    bot: Bot,
     message: Message,
     level: u32,
     courses: &Courses,
