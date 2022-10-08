@@ -3,7 +3,7 @@ use chrono_tz::Tz;
 use commands::Command;
 use lazy_static::lazy_static;
 use std::error::Error;
-use teloxide::{filter_command, prelude::*, types::Update, utils::command::BotCommands};
+use teloxide::{filter_command, prelude::*, utils::command::BotCommands};
 use tokio::fs;
 
 mod arcana;
