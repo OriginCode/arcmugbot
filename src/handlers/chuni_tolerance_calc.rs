@@ -1,5 +1,5 @@
 use std::error::Error;
-use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
+use teloxide::prelude::*;
 
 const MAX_SCORE: u32 = 1010000;
 

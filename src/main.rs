@@ -2,7 +2,6 @@ use chrono::{Datelike, Utc};
 use chrono_tz::Tz;
 use commands::Command;
 use lazy_static::lazy_static;
-use std::borrow::Borrow;
 use std::error::Error;
 use teloxide::{prelude::*, utils::command::BotCommands};
 use tokio::fs;
