@@ -36,7 +36,6 @@ pub async fn tolerance_calc(
         ),
     )
     .reply_to_message_id(message.id)
-    .send()
     .await?;
 
     Ok(())
