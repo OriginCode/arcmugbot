@@ -2,6 +2,7 @@ use chrono::{Datelike, Utc};
 use chrono_tz::Tz;
 use commands::Command;
 use lazy_static::lazy_static;
+use std::borrow::Borrow;
 use std::error::Error;
 use teloxide::{prelude::*, utils::command::BotCommands};
 use tokio::fs;
@@ -77,6 +78,9 @@ async fn answer(
         }
         Command::IIDXRecent { version, param } => {
             handlers::arcana::iidx::recent(bot, message, version, &param).await?
+        }
+        Command::ChuniTolerance { notes, target } => {
+            handlers::chuni_tolerance_calc::tolerance_calc(bot, message, notes, &target).await?
         }
     };
 

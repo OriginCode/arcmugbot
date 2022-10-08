@@ -65,6 +65,11 @@ pub enum Command {
         parse_with = "split"
     )]
     IIDXRecent { version: u32, param: String },
+    #[command(
+        description = "calculate CHUNITHM score tolerance",
+        parse_with = "split"
+    )]
+    ChuniTolerance { notes: u32, target: String },
 }
 
 fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {
