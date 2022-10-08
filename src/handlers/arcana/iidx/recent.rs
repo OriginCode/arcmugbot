@@ -1,5 +1,5 @@
 use std::error::Error;
-use teloxide::{prelude2::*, types::ParseMode, utils::markdown::*};
+use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
 
 use super::get_profiles;
 use crate::arcana::iidx::{get_charts, get_most_recent, get_music, Chart};

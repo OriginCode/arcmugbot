@@ -29,4 +29,4 @@ pub struct UserRecords {
     pub records: HashMap<u32, Record>,
 }
 
-pub type Records = HashMap<i64, UserRecords>;
+pub type Records = HashMap<u64, UserRecords>;

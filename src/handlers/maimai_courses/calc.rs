@@ -1,5 +1,5 @@
 use std::error::Error;
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 
 use crate::maimai_courses::{Status, Submission};
 

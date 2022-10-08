@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error};
 use teloxide::{
-    prelude2::*,
+    prelude::*,
     types::ParseMode,
     utils::{command::ParseError, markdown::*},
 };
@@ -46,7 +46,7 @@ pub async fn submit(
     .await;
 
     records
-        .entry(user.id)
+        .entry(user.id.0)
         .and_modify(|r| {
             // update record
             r.fullname = user.full_name();

@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use std::error::Error;
-use teloxide::{prelude2::*, types::ParseMode, utils::markdown::*};
+use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
 
 use crate::maimai_courses::{Courses, Records, Status};
 

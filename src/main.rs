@@ -3,7 +3,7 @@ use chrono_tz::Tz;
 use commands::Command;
 use lazy_static::lazy_static;
 use std::error::Error;
-use teloxide::{prelude2::*, utils::command::BotCommand};
+use teloxide::{prelude::*, utils::command::BotCommands};
 use tokio::fs;
 
 mod arcana;
@@ -40,7 +40,7 @@ async fn answer(
             bot.send_message(message.chat.id, "pong!").await?;
         }
         Command::Help => {
-            bot.send_message(message.chat.id, Command::descriptions())
+            bot.send_message(message.chat.id, Command::descriptions().to_string())
                 .reply_to_message_id(message.id)
                 .await?;
         }
@@ -85,10 +85,10 @@ async fn answer(
 
 #[tokio::main]
 async fn main() {
-    teloxide::enable_logging!();
+    pretty_env_logger::init();
     log::info!("Starting arcmugbot...");
 
     let bot = Bot::new(TOKEN).auto_send();
 
-    teloxide::repls2::commands_repl(bot, answer, Command::ty()).await;
+    teloxide::commands_repl(bot, answer, Command::ty()).await;
 }

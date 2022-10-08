@@ -1,6 +1,6 @@
 use std::error::Error;
 use teloxide::{
-    prelude2::*,
+    prelude::*,
     types::ParseMode,
     utils::{command::ParseError, markdown::*},
 };
@@ -29,7 +29,8 @@ pub async fn score(
     let user = message
         .from()
         .ok_or_else(|| ParseError::Custom("invalid user".into()))?
-        .id;
+        .id
+        .0;
     if let Some(user_record) = records.get(&user) {
         if let Some(r) = user_record.records.get(&level) {
             let course = &courses[level as usize - 1];

@@ -1,12 +1,12 @@
 use std::{collections::VecDeque, str::SplitWhitespace};
-use teloxide::utils::command::{BotCommand, ParseError};
+use teloxide::utils::command::{BotCommands, ParseError};
 
 use crate::maimai_courses::Submission;
 
 pub type Results = VecDeque<[u32; 3]>;
 
 // Commands
-#[derive(BotCommand, Clone)]
+#[derive(BotCommands, Clone)]
 #[command(
     rename = "lowercase",
     description = "The following commands are available:"
