@@ -9,7 +9,7 @@ pub async fn tolerance_calc(
     notes: u32,
     target: &str,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
-    let single = (MAX_SCORE / notes) as f32;
+    let single = MAX_SCORE as f32 / notes as f32;
     let single_justice = (single as f32) / 1.01;
     let single_attack = (single as f32) / 2.02;
 
