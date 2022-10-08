@@ -1,6 +1,6 @@
 [package]
 name = "arcmugbot"
-version = "0.5.0"
+version = "0.5.1"
 license = "MIT"
 authors = ["Kaiyang Wu <self@origincode.me>"]
 edition = "2021"
