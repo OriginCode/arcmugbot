@@ -27,12 +27,13 @@ lazy_static! {
 
 fn lisp_eval(input: String) -> String {
     let (tx, rx) = std::sync::mpsc::channel();
-    std::thread::spawn(move || match tx.send(lisp_rs_eval(&input)) {
-        Ok(()) => {}
-        Err(_) => {}
-    });
-    rx.recv_timeout(std::time::Duration::from_secs(5))
-        .unwrap_or("timeout".to_owned())
+    let t = std::thread::spawn(move || tx.send(lisp_rs_eval(&input)).unwrap());
+    let ret = rx
+        .recv_timeout(std::time::Duration::from_secs(5))
+        .unwrap_or("timeout".to_owned());
+    drop(t);
+
+    ret
 }
 
 /// Parse Telegram commands
