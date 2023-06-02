@@ -1,5 +1,5 @@
-use chrono::{Datelike, Utc};
-use chrono_tz::Tz;
+// use chrono::{Datelike, Utc};
+// use chrono_tz::Tz;
 use commands::Command;
 use lazy_static::lazy_static;
 use std::error::Error;
@@ -18,10 +18,10 @@ const ABOUT: &str =
     "Arcade MUG Bot, designed by OriginCode.\nGitHub: https://github.com/OriginCode/arcmugbot";
 const TOKEN: &str = "";
 const ARCANA_TOKEN: &str = "";
-const TZ: Tz = chrono_tz::Asia::Shanghai;
+// const TZ: Tz = chrono_tz::Asia::Shanghai;
 
 lazy_static! {
-    pub static ref DATE: String = format!("{}-{}", Utc::today().with_timezone(&TZ).year(), 1);
+    pub static ref DATE: String = format!("{}-{}", 2022, 1);
 }
 
 /// Parse Telegram commands
