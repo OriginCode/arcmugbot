@@ -25,6 +25,16 @@ lazy_static! {
     pub static ref DATE: String = format!("{}-{}", 2022, 1);
 }
 
+fn lisp_eval(input: String) -> String {
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::spawn(move || match tx.send(lisp_rs_eval(&input)) {
+        Ok(()) => {}
+        Err(_) => {}
+    });
+    rx.recv_timeout(std::time::Duration::from_secs(5))
+        .unwrap_or("timeout".to_owned())
+}
+
 /// Parse Telegram commands
 async fn answer(
     bot: Bot,
@@ -80,7 +90,7 @@ async fn answer(
             handlers::chuni_tolerance_calc::tolerance_calc(bot, message, notes, &target).await?
         }
         Command::Lisp { input } => {
-            bot.send_message(message.chat.id, lisp_rs_eval(&input))
+            bot.send_message(message.chat.id, lisp_eval(input))
                 .reply_to_message_id(message.id)
                 .await?;
         }
