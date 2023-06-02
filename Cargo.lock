@@ -54,6 +54,7 @@ dependencies = [
  "chrono-tz",
  "indexmap",
  "lazy_static",
+ "lisp-rs",
  "log",
  "pretty_env_logger",
  "reqwest",
@@ -670,6 +671,12 @@ name = "linux-raw-sys"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef53942eb7bf7ff43a617b3e2c1c4a5ecf5944a7c1bc12d7ee39bbb15e5c1519"
+
+[[package]]
+name = "lisp-rs"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "808a7f355b6495873be98335003e99542cce7cd58f6fae67c349913b910094f7"
 
 [[package]]
 name = "log"

@@ -61,6 +61,8 @@ pub enum Command {
         parse_with = "split"
     )]
     ChuniTolerance { notes: u32, target: String },
+    #[command(description = "Lisp REPL (powered by lisp-rs)")]
+    Lisp { input: String },
 }
 
 fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {

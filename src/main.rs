@@ -2,6 +2,7 @@
 // use chrono_tz::Tz;
 use commands::Command;
 use lazy_static::lazy_static;
+use lisp_rs::lisp_rs_eval;
 use std::error::Error;
 use teloxide::{filter_command, prelude::*, utils::command::BotCommands};
 use tokio::fs;
@@ -77,6 +78,11 @@ async fn answer(
         }
         Command::ChuniTolerance { notes, target } => {
             handlers::chuni_tolerance_calc::tolerance_calc(bot, message, notes, &target).await?
+        }
+        Command::Lisp { input } => {
+            bot.send_message(message.chat.id, lisp_rs_eval(&input))
+                .reply_to_message_id(message.id)
+                .await?;
         }
     };
 
