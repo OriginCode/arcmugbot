@@ -95,6 +95,7 @@ async fn answer(
                 .reply_to_message_id(message.id)
                 .await?;
         }
+        Command::IIDXSP12 { title } => handlers::iidxsp12::sp12(bot, message, &title).await?,
     };
 
     Ok(())
