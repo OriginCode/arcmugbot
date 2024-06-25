@@ -63,8 +63,8 @@ pub enum Command {
     ChuniTolerance { notes: u32, target: String },
     #[command(description = "Lisp REPL (powered by lisp-rs)")]
     Lisp { input: String },
-    #[command(description = "Search IIDX SP12 difficulty table (/iidxsp12 TITLE)")]
-    IIDXSP12 { title: String },
+    #[command(description = "Search IIDX SP12 difficulty table (/sp12 TITLE)")]
+    SP12 { title: String },
 }
 
 fn next_str_into_u32(from: Option<&str>) -> Result<u32, ParseError> {
