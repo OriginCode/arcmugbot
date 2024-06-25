@@ -34,7 +34,7 @@ impl fmt::Display for Difficulty {
 #[derive(PartialEq, Eq, Hash, Debug, Deserialize, Serialize)]
 struct Song {
     name: String,
-    difficulty: Difficulty,
+    difficulty: Option<Difficulty>,
     normal: String,
     hard: String,
     version: u8,
@@ -81,7 +81,11 @@ pub async fn sp12(
                 format!(
                     "Title: {}\nDifficulty: {}\nVersion: {}\n\nNormal: {}\nHard: {}",
                     entry.name,
-                    entry.difficulty,
+                    entry
+                        .difficulty
+                        .as_ref()
+                        .map(|d| d.to_string())
+                        .unwrap_or("Unknown".to_owned()),
                     entry.version,
                     if entry.normal.is_empty() {
                         "未定"
