@@ -1,7 +1,7 @@
 use std::error::Error;
 use teloxide::{
     prelude::*,
-    types::ParseMode,
+    types::{ParseMode, ReplyParameters},
     utils::{command::ParseError, markdown::*},
 };
 
@@ -21,7 +21,7 @@ pub async fn score(
     // Passed
     if level as usize > courses.len() || level == 0 {
         bot.send_message(message.chat.id, "Invalid course level!")
-            .reply_to_message_id(message.id)
+            .reply_parameters(ReplyParameters::new(message.id))
             .await?;
         return Ok(());
     }
@@ -45,13 +45,13 @@ pub async fn score(
                 ),
             )
             .parse_mode(ParseMode::MarkdownV2)
-            .reply_to_message_id(message.id)
+            .reply_parameters(ReplyParameters::new(message.id))
             .await?;
             return Ok(());
         }
     }
     bot.send_message(message.chat.id, "Record does not exist!")
-        .reply_to_message_id(message.id)
+        .reply_parameters(ReplyParameters::new(message.id))
         .await?;
 
     Ok(())

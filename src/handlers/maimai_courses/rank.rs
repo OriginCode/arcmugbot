@@ -1,6 +1,10 @@
 use indexmap::IndexMap;
 use std::error::Error;
-use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
+use teloxide::{
+    prelude::*,
+    types::{ParseMode, ReplyParameters},
+    utils::markdown::*,
+};
 
 use crate::maimai_courses::{Courses, Records, Status};
 
@@ -13,7 +17,7 @@ pub async fn rank(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     if level as usize > courses.len() || level == 0 {
         bot.send_message(message.chat.id, "Invalid course level!")
-            .reply_to_message_id(message.id)
+            .reply_parameters(ReplyParameters::new(message.id))
             .await?;
         return Ok(());
     }
@@ -30,7 +34,7 @@ pub async fn rank(
         output = format!("{}\n{}", output, escape("No record yet."));
         bot.send_message(message.chat.id, output)
             .parse_mode(ParseMode::MarkdownV2)
-            .reply_to_message_id(message.id)
+            .reply_parameters(ReplyParameters::new(message.id))
             .await?;
         return Ok(());
     }
@@ -47,7 +51,7 @@ pub async fn rank(
     }
     bot.send_message(message.chat.id, output)
         .parse_mode(ParseMode::MarkdownV2)
-        .reply_to_message_id(message.id)
+        .reply_parameters(ReplyParameters::new(message.id))
         .await?;
 
     Ok(())

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, error::Error};
 use teloxide::{
     prelude::*,
-    types::ParseMode,
+    types::{ParseMode, ReplyParameters},
     utils::{command::ParseError, markdown::*},
 };
 
@@ -27,7 +27,7 @@ pub async fn submit(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     if level as usize > courses.len() || level == 0 {
         bot.send_message(message.chat.id, "Invalid course level!")
-            .reply_to_message_id(message.id)
+            .reply_parameters(ReplyParameters::new(message.id))
             .await?;
         return Ok(());
     }
@@ -93,7 +93,7 @@ pub async fn submit(
         ),
     )
     .parse_mode(ParseMode::MarkdownV2)
-    .reply_to_message_id(message.id)
+    .reply_parameters(ReplyParameters::new(message.id))
     .await?;
 
     Ok(())

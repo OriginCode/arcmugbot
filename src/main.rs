@@ -4,7 +4,7 @@ use commands::Command;
 use lazy_static::lazy_static;
 use lisp_rs::lisp_rs_eval;
 use std::error::Error;
-use teloxide::{filter_command, prelude::*, utils::command::BotCommands};
+use teloxide::{filter_command, prelude::*, types::ReplyParameters, utils::command::BotCommands};
 use tokio::fs;
 
 mod arcana;
@@ -50,7 +50,7 @@ async fn answer(
         }
         Command::Help => {
             bot.send_message(message.chat.id, Command::descriptions().to_string())
-                .reply_to_message_id(message.id)
+                .reply_parameters(ReplyParameters::new(message.id))
                 .await?;
         }
         Command::About => {
@@ -92,7 +92,7 @@ async fn answer(
         }
         Command::Lisp { input } => {
             bot.send_message(message.chat.id, lisp_eval(input))
-                .reply_to_message_id(message.id)
+                .reply_parameters(ReplyParameters::new(message.id))
                 .await?;
         }
         Command::SP12 { title } => handlers::iidxsp12::sp12(bot, message, &title).await?,

@@ -3,7 +3,7 @@ use priority_queue::PriorityQueue;
 use reqwest::get;
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, hash::Hash};
-use teloxide::prelude::*;
+use teloxide::{prelude::*, types::ReplyParameters};
 
 #[derive(PartialEq, Eq, Hash, Debug, Deserialize, Serialize)]
 pub enum Difficulty {
@@ -99,12 +99,12 @@ pub async fn sp12(
                     }
                 ),
             )
-            .reply_to_message_id(message.id)
+            .reply_parameters(ReplyParameters::new(message.id))
             .await?;
         }
     } else {
         bot.send_message(message.chat.id, "Not found".to_owned())
-            .reply_to_message_id(message.id)
+            .reply_parameters(ReplyParameters::new(message.id))
             .await?;
     }
 

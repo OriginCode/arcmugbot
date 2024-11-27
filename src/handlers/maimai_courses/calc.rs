@@ -1,5 +1,5 @@
 use std::error::Error;
-use teloxide::prelude::*;
+use teloxide::{prelude::*, types::ReplyParameters};
 
 use crate::maimai_courses::{Status, Submission};
 
@@ -38,7 +38,7 @@ pub async fn calc(
         message.chat.id,
         format!("Life: {}/{}\n{}", remain, submission.life, status),
     )
-    .reply_to_message_id(message.id)
+    .reply_parameters(ReplyParameters::new(message.id))
     .await?;
     Ok(())
 }

@@ -1,5 +1,5 @@
 use std::error::Error;
-use teloxide::prelude::*;
+use teloxide::{prelude::*, types::ReplyParameters};
 
 const MAX_SCORE: u32 = 1010000;
 
@@ -35,7 +35,7 @@ pub async fn tolerance_calc(
             single,
         ),
     )
-    .reply_to_message_id(message.id)
+    .reply_parameters(ReplyParameters::new(message.id))
     .await?;
 
     Ok(())

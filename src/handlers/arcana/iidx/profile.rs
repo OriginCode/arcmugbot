@@ -1,5 +1,5 @@
 use std::error::Error;
-use teloxide::{prelude::*, types::ParseMode, utils::markdown::*};
+use teloxide::{prelude::*, types::ParseMode, types::ReplyParameters, utils::markdown::*};
 
 use super::get_profiles;
 
@@ -43,7 +43,7 @@ pub async fn profile(
         .join("\n------\n");
     bot.send_message(message.chat.id, output)
         .parse_mode(ParseMode::MarkdownV2)
-        .reply_to_message_id(message.id)
+        .reply_parameters(ReplyParameters::new(message.id))
         .await?;
 
     Ok(())
